@@ -50,7 +50,7 @@ pub fn block_ip(bpf: &mut Bpf, ip: u32) -> Result<(), anyhow::Error> {
 /// Get current violation count from eBPF
 pub fn get_violation_count(bpf: &mut Bpf) -> Result<u64, anyhow::Error> {
     if let Some(map) = bpf.map_mut("aegis_violations") {
-        if let Ok(mut hmap) = PerCpuArray::<_, u64>::try_from(map) {
+        if let Ok(hmap) = PerCpuArray::<_, u64>::try_from(map) {
             let values = hmap.get(&0, 0)?;
             let total: u64 = values.iter().sum();
             return Ok(total);

@@ -80,13 +80,10 @@ impl EbpfRuntime {
         for (name, bpf) in &loaded {
             let programs = bpf.programs();
             for (pname, program) in programs {
-                match program.try_into() {
-                    Ok(tp) => {
-                        if let Err(e) = tp.load() {
-                            warn!(program = %pname, error = %e, "Failed to load tracepoint");
-                        }
+                if let Ok(tp) = program.try_into::<&aya::programs::TracePoint>() {
+                    if let Err(e) = tp.load() {
+                        warn!(program = %pname, error = %e, "Failed to load tracepoint");
                     }
-                    Err(_) => {}
                 }
             }
         }
