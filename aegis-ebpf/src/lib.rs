@@ -7,12 +7,12 @@ use tokio::sync::RwLock;
 use tracing::{debug, error, info, warn};
 
 mod events;
-mod twoplane;
 mod maps;
+mod twoplane;
 
 pub use events::*;
-pub use twoplane::*;
 pub use maps::*;
+pub use twoplane::*;
 
 pub struct EbpfRuntime {
     bpf: Option<aya::Bpf>,
@@ -40,10 +40,22 @@ impl EbpfRuntime {
     pub async fn load_and_attach(&mut self) -> anyhow::Result<()> {
         // Try loading each eBPF program
         let bpf_programs = [
-            ("syscall_monitor", include_bytes_aligned!("bpf/syscall_monitor.bpf.o") as &[u8]),
-            ("tcp_monitor", include_bytes_aligned!("bpf/tcp_monitor.bpf.o") as &[u8]),
-            ("file_access", include_bytes_aligned!("bpf/file_access.bpf.o") as &[u8]),
-            ("credential_monitor", include_bytes_aligned!("bpf/credential_monitor.bpf.o") as &[u8]),
+            (
+                "syscall_monitor",
+                include_bytes_aligned!("bpf/syscall_monitor.bpf.o") as &[u8],
+            ),
+            (
+                "tcp_monitor",
+                include_bytes_aligned!("bpf/tcp_monitor.bpf.o") as &[u8],
+            ),
+            (
+                "file_access",
+                include_bytes_aligned!("bpf/file_access.bpf.o") as &[u8],
+            ),
+            (
+                "credential_monitor",
+                include_bytes_aligned!("bpf/credential_monitor.bpf.o") as &[u8],
+            ),
         ];
 
         let mut loaded = Vec::new();

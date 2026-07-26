@@ -9,21 +9,25 @@ use tokio::signal;
 use tokio::sync::RwLock;
 use tracing::{error, info, warn};
 
-mod proxy;
-mod identity;
-mod policy;
-mod tool_gate;
-mod cost_circuit;
-mod recursion;
 mod audit;
+mod cost_circuit;
 mod ebpf;
-mod telemetry;
-mod protocol;
-mod middleware;
+mod identity;
 mod metrics;
+mod middleware;
+mod policy;
+mod protocol;
+mod proxy;
+mod recursion;
+mod telemetry;
+mod tool_gate;
 
 #[derive(Parser)]
-#[command(name = "aegis-sidecar", about = "AEGIS Governance Sidecar — policy enforcement proxy for AI agents", version)]
+#[command(
+    name = "aegis-sidecar",
+    about = "AEGIS Governance Sidecar — policy enforcement proxy for AI agents",
+    version
+)]
 struct Args {
     #[arg(short, long, default_value = "/etc/aegis/sidecar.yaml")]
     config: PathBuf,
@@ -72,15 +76,9 @@ async fn main() -> anyhow::Result<()> {
             &metrics_registry,
         ),
         tool_gate: tool_gate::ToolGate::new(config.allowed_tools.clone()),
-        cost: cost_circuit::CostCircuit::new(
-            config.budget_limit_usd,
-            config.sidecar_id.clone(),
-        ),
+        cost: cost_circuit::CostCircuit::new(config.budget_limit_usd, config.sidecar_id.clone()),
         recursion: recursion::RecursionDetector::new(config.max_recursion_depth),
-        audit: audit::AuditLogger::new(
-            config.kafka_brokers.clone(),
-            config.sidecar_id.clone(),
-        ),
+        audit: audit::AuditLogger::new(config.kafka_brokers.clone(), config.sidecar_id.clone()),
         ebpf: if config.enable_ebpf {
             Some(ebpf::EbpfManager::new().await?)
         } else {
@@ -99,11 +97,10 @@ async fn main() -> anyhow::Result<()> {
     );
 
     let proxy_listener = tokio::net::TcpListener::bind(&config.listen_addr).await?;
-    let health_listener = tokio::net::TcpListener::bind(
-        config.listen_addr.replace(":9000", ":9090"),
-    ).await.unwrap_or_else(|_| {
-        tokio::net::TcpListener::bind("0.0.0.0:9090").unwrap()
-    });
+    let health_listener =
+        tokio::net::TcpListener::bind(config.listen_addr.replace(":9000", ":9090"))
+            .await
+            .unwrap_or_else(|_| tokio::net::TcpListener::bind("0.0.0.0:9090").unwrap());
 
     let state_clone = state.clone();
     let proxy_handle = tokio::spawn(async move {
@@ -136,20 +133,19 @@ async fn serve_health(listener: tokio::net::TcpListener, state: Arc<AppState>) {
         let state = state.clone();
         async move {
             match req.uri().path() {
-                "/health" | "/ready" => {
-                    Ok(hyper::Response::builder()
-                        .header("content-type", "application/json")
-                        .body(Full::new(Bytes::from(
-                            serde_json::json!({
-                                "status": "ok",
-                                "sidecar_id": state.config.read().await.sidecar_id,
-                                "agent_id": state.config.read().await.agent_id,
-                                "uptime_seconds": 0,
-                                "connections_active": 0,
-                            }).to_string()
-                        )))
-                        .unwrap())
-                }
+                "/health" | "/ready" => Ok(hyper::Response::builder()
+                    .header("content-type", "application/json")
+                    .body(Full::new(Bytes::from(
+                        serde_json::json!({
+                            "status": "ok",
+                            "sidecar_id": state.config.read().await.sidecar_id,
+                            "agent_id": state.config.read().await.agent_id,
+                            "uptime_seconds": 0,
+                            "connections_active": 0,
+                        })
+                        .to_string(),
+                    )))
+                    .unwrap()),
                 "/metrics" => {
                     let metrics = state.metrics.snapshot().await;
                     Ok(hyper::Response::builder()

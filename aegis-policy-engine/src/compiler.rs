@@ -32,7 +32,10 @@ impl RegoCompiler {
     /// Compile a Rego source file to WASM
     pub fn compile_to_wasm(&self, rego_source: &str, package: &str) -> anyhow::Result<Vec<u8>> {
         if !self.opa_binary.exists() {
-            warn!("OPA binary not found at {:?}, using native evaluation", self.opa_binary);
+            warn!(
+                "OPA binary not found at {:?}, using native evaluation",
+                self.opa_binary
+            );
             return Err(anyhow::anyhow!("OPA binary not found"));
         }
 
@@ -125,13 +128,21 @@ impl RegoCompiler {
             }
 
             // Check for common Rego syntax errors
-            if line.contains("=") && !line.contains(":=") && !line.contains("==") && !line.starts_with("default ") {
+            if line.contains("=")
+                && !line.contains(":=")
+                && !line.contains("==")
+                && !line.starts_with("default ")
+            {
                 let parts: Vec<&str> = line.split('=').collect();
                 if parts.len() == 2 {
                     let left = parts[0].trim();
                     let right = parts[1].trim();
-                    if !right.starts_with('{') && !right.starts_with('[') && !right.starts_with('"') {
-                        errors.push(format!("line {}: use := for assignment, = for comparison", i + 1));
+                    if !right.starts_with('{') && !right.starts_with('[') && !right.starts_with('"')
+                    {
+                        errors.push(format!(
+                            "line {}: use := for assignment, = for comparison",
+                            i + 1
+                        ));
                     }
                 }
             }

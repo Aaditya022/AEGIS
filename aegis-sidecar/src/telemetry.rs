@@ -30,9 +30,10 @@ pub async fn init_telemetry(
     let telemetry_layer = tracing_opentelemetry::layer().with_tracer(tracer);
 
     Registry::default()
-        .with(tracing_subscriber::EnvFilter::try_new(&config.log_level).unwrap_or_else(|_| {
-            tracing_subscriber::EnvFilter::new("info")
-        }))
+        .with(
+            tracing_subscriber::EnvFilter::try_new(&config.log_level)
+                .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info")),
+        )
         .with(tracing_subscriber::fmt::layer().json())
         .with(telemetry_layer)
         .try_init()

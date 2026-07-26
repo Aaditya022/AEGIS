@@ -20,7 +20,9 @@ impl CostCircuit {
 
     pub fn record(&self, cost_usd: f64) {
         let micro_cents = (cost_usd * 1_000_000.0) as u64;
-        let prev = self.current_cost_micro_cents.fetch_add(micro_cents, Ordering::SeqCst);
+        let prev = self
+            .current_cost_micro_cents
+            .fetch_add(micro_cents, Ordering::SeqCst);
         let new_total = (prev + micro_cents) as f64 / 1_000_000.0;
 
         if new_total > self.budget() {

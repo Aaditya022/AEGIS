@@ -38,11 +38,7 @@ impl ToolGate {
         false
     }
 
-    pub async fn validate_tool_params(
-        &self,
-        tool: &str,
-        params: &str,
-    ) -> Result<bool, String> {
+    pub async fn validate_tool_params(&self, tool: &str, params: &str) -> Result<bool, String> {
         let schemas = self.schemas.read().await;
         let schema = match schemas.get(tool) {
             Some(s) => s,
@@ -55,7 +51,9 @@ impl ToolGate {
         // Validate required fields
         if let Some(required) = schema.get("required").and_then(|r| r.as_array()) {
             for field in required {
-                let field_name = field.as_str().ok_or("invalid schema: required field not string")?;
+                let field_name = field
+                    .as_str()
+                    .ok_or("invalid schema: required field not string")?;
                 if params_val.get(field_name).is_none() {
                     return Ok(false);
                 }

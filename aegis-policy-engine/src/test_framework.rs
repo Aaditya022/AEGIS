@@ -1,5 +1,5 @@
-use aegis_common::types::{Decision, PolicyContext, PolicyResult};
 use crate::PolicyEngine;
+use aegis_common::types::{Decision, PolicyContext, PolicyResult};
 
 pub struct PolicyTest {
     pub name: String,
@@ -30,33 +30,36 @@ impl PolicyTestSuite {
     }
 
     pub fn run_all(&self) -> Vec<TestResult> {
-        self.tests.iter().map(|test| {
-            let start = std::time::Instant::now();
-            let result = self.engine.evaluate(&test.context);
-            let elapsed = start.elapsed();
+        self.tests
+            .iter()
+            .map(|test| {
+                let start = std::time::Instant::now();
+                let result = self.engine.evaluate(&test.context);
+                let elapsed = start.elapsed();
 
-            match result {
-                Ok(actual) => {
-                    let passed = actual.decision == test.expected_decision;
-                    TestResult {
-                        name: test.name.clone(),
-                        passed,
-                        expected: test.expected_decision.clone(),
-                        actual: actual.decision.clone(),
-                        reason: actual.reason,
-                        elapsed_ns: elapsed.as_nanos() as i64,
+                match result {
+                    Ok(actual) => {
+                        let passed = actual.decision == test.expected_decision;
+                        TestResult {
+                            name: test.name.clone(),
+                            passed,
+                            expected: test.expected_decision.clone(),
+                            actual: actual.decision.clone(),
+                            reason: actual.reason,
+                            elapsed_ns: elapsed.as_nanos() as i64,
+                        }
                     }
+                    Err(e) => TestResult {
+                        name: test.name.clone(),
+                        passed: false,
+                        expected: test.expected_decision.clone(),
+                        actual: Decision::Deny,
+                        reason: format!("evaluation error: {e}"),
+                        elapsed_ns: elapsed.as_nanos() as i64,
+                    },
                 }
-                Err(e) => TestResult {
-                    name: test.name.clone(),
-                    passed: false,
-                    expected: test.expected_decision.clone(),
-                    actual: Decision::Deny,
-                    reason: format!("evaluation error: {e}"),
-                    elapsed_ns: elapsed.as_nanos() as i64,
-                },
-            }
-        }).collect()
+            })
+            .collect()
     }
 
     /// Create a standard compliance test suite
@@ -150,7 +153,9 @@ impl PolicyTestSuite {
                     recursion_depth: 0,
                     budget_consumed_usd: 10.0,
                     trace_id: "trace-6".into(),
-                    extra: [("human_approved".into(), "false".into())].into_iter().collect(),
+                    extra: [("human_approved".into(), "false".into())]
+                        .into_iter()
+                        .collect(),
                 },
                 expected_decision: Decision::Escalate,
             },
@@ -165,7 +170,9 @@ impl PolicyTestSuite {
                     recursion_depth: 0,
                     budget_consumed_usd: 10.0,
                     trace_id: "trace-7".into(),
-                    extra: [("human_approved".into(), "true".into())].into_iter().collect(),
+                    extra: [("human_approved".into(), "true".into())]
+                        .into_iter()
+                        .collect(),
                 },
                 expected_decision: Decision::Allow,
             },
@@ -230,7 +237,11 @@ impl std::fmt::Display for TestSummary {
         writeln!(f, "  Total:  {}", self.total)?;
         writeln!(f, "  Passed: {}", self.passed)?;
         writeln!(f, "  Failed: {}", self.failed)?;
-        writeln!(f, "  Pass rate: {:.1}%", (self.passed as f64 / self.total as f64) * 100.0)?;
+        writeln!(
+            f,
+            "  Pass rate: {:.1}%",
+            (self.passed as f64 / self.total as f64) * 100.0
+        )?;
         write!(f, "  Avg evaluation: {}ns", self.avg_evaluation_time_ns)?;
         Ok(())
     }

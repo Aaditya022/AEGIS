@@ -17,9 +17,19 @@ pub fn budget_exceeded(spent: f64, limit: f64) -> bool {
 /// Evaluate a reasoning pattern risk score (0.0 to 1.0)
 pub fn reasoning_risk_score(text: &str) -> f64 {
     let high_risk_patterns = [
-        "ignore", "bypass", "override", "delete", "drop ", "rm -rf",
-        "sudo", "chmod 777", "admin", "password", "secret",
-        "ignore previous", "disregard",
+        "ignore",
+        "bypass",
+        "override",
+        "delete",
+        "drop ",
+        "rm -rf",
+        "sudo",
+        "chmod 777",
+        "admin",
+        "password",
+        "secret",
+        "ignore previous",
+        "disregard",
     ];
     let mut score = 0.0;
     for pattern in &high_risk_patterns {
@@ -115,7 +125,9 @@ pub fn tool_allowed(tool: &str, allowed: &[String]) -> bool {
         return true;
     }
     allowed.iter().any(|a| {
-        if a == tool { return true; }
+        if a == tool {
+            return true;
+        }
         if a.ends_with('*') {
             let prefix = a.trim_end_matches('*');
             tool.starts_with(prefix)

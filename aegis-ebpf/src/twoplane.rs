@@ -99,9 +99,7 @@ impl TwoPlaneVerifier {
         // Check eBPF infra-plane observations for this operation
         let observations = self.infra_plane_observations.read().await;
         let infra_plane_allows = !observations.iter().any(|o| {
-            o.operation == operation
-                && o.resource == resource
-                && o.actual_decision == "DENY"
+            o.operation == operation && o.resource == resource && o.actual_decision == "DENY"
         });
 
         // Two-Plane Verification: if planes disagree, block and alert
@@ -109,8 +107,16 @@ impl TwoPlaneVerifier {
             self.violations.fetch_add(1, Ordering::SeqCst);
             let divergent = DivergentEvent {
                 trace_id: trace_id.to_string(),
-                app_plane_decision: if app_plane_allows { "ALLOW".into() } else { "DENY".into() },
-                infra_plane_decision: if infra_plane_allows { "ALLOW".into() } else { "DENY".into() },
+                app_plane_decision: if app_plane_allows {
+                    "ALLOW".into()
+                } else {
+                    "DENY".into()
+                },
+                infra_plane_decision: if infra_plane_allows {
+                    "ALLOW".into()
+                } else {
+                    "DENY".into()
+                },
                 operation: operation.to_string(),
                 resource: resource.to_string(),
                 agent_id: agent_id.to_string(),

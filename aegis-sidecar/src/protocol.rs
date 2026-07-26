@@ -1,14 +1,14 @@
-use hyper::{header, Method, HeaderMap, Uri};
+use hyper::{header, HeaderMap, Method, Uri};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum DetectedProtocol {
     Http,
     Https,
     Grpc,
-    Mcp,   // Model Context Protocol (Anthropic)
-    A2a,   // Agent-to-Agent (Google)
-    Acp,   // Agent Communication Protocol
-    Anp,   // Agent Network Protocol
+    Mcp, // Model Context Protocol (Anthropic)
+    A2a, // Agent-to-Agent (Google)
+    Acp, // Agent Communication Protocol
+    Anp, // Agent Network Protocol
     Unknown,
 }
 

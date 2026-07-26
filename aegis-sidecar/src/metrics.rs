@@ -55,7 +55,9 @@ impl MetricsRegistry {
     }
 
     pub fn inc_escalated(&self) {
-        self.counters.escalated_total.fetch_add(1, Ordering::Relaxed);
+        self.counters
+            .escalated_total
+            .fetch_add(1, Ordering::Relaxed);
     }
 
     pub async fn snapshot(&self) -> String {
@@ -65,11 +67,7 @@ impl MetricsRegistry {
         let escalated = self.counters.escalated_total.load(Ordering::Relaxed);
         let duration_ns = self.counters.request_duration_ns.load(Ordering::Relaxed);
         let count = self.counters.request_count.load(Ordering::Relaxed);
-        let avg_latency = if count > 0 {
-            duration_ns / count
-        } else {
-            0
-        };
+        let avg_latency = if count > 0 { duration_ns / count } else { 0 };
 
         let cat_map = self.denied_by_category.read().await;
 
@@ -86,14 +84,18 @@ impl MetricsRegistry {
         output.push_str("# HELP aegis_escalated_total Total escalated requests\n");
         output.push_str("# TYPE aegis_escalated_total counter\n");
         output.push_str(&format!("aegis_escalated_total {escalated}\n"));
-        output.push_str("# HELP aegis_request_duration_avg Average request duration in nanoseconds\n");
+        output.push_str(
+            "# HELP aegis_request_duration_avg Average request duration in nanoseconds\n",
+        );
         output.push_str("# TYPE aegis_request_duration_avg gauge\n");
         output.push_str(&format!("aegis_request_duration_avg {avg_latency}\n"));
 
         output.push_str("# HELP aegis_denied_by_category Denied requests by category\n");
         output.push_str("# TYPE aegis_denied_by_category counter\n");
         for (cat, count) in cat_map.iter() {
-            output.push_str(&format!("aegis_denied_by_category{{category=\"{cat}\"}} {count}\n"));
+            output.push_str(&format!(
+                "aegis_denied_by_category{{category=\"{cat}\"}} {count}\n"
+            ));
         }
 
         output

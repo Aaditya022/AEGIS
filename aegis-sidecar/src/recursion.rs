@@ -84,11 +84,7 @@ impl RecursionDetector {
     pub async fn tool_repetition(&self, trace_id: &str, tool: &str) -> bool {
         let traces = self.traces.read().await;
         if let Some(state) = traces.get(trace_id) {
-            let count = state
-                .tool_calls
-                .iter()
-                .filter(|(t, _)| t == tool)
-                .count();
+            let count = state.tool_calls.iter().filter(|(t, _)| t == tool).count();
             count >= self.max_depth as usize
         } else {
             false

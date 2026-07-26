@@ -56,10 +56,7 @@ impl Proxy {
     }
 }
 
-async fn handle_connection(
-    req: Request<Incoming>,
-    state: Arc<AppState>,
-) -> ProxyResult {
+async fn handle_connection(req: Request<Incoming>, state: Arc<AppState>) -> ProxyResult {
     let method = req.method().clone();
     let uri = req.uri().clone();
     let headers = req.headers().clone();
@@ -74,7 +71,11 @@ async fn handle_connection(
             Some(id) => id,
             None => {
                 state.metrics.inc_denied("missing_identity");
-                return deny(StatusCode::UNAUTHORIZED, "missing agent identity", "identity");
+                return deny(
+                    StatusCode::UNAUTHORIZED,
+                    "missing agent identity",
+                    "identity",
+                );
             }
         };
 
@@ -110,13 +111,14 @@ async fn handle_connection(
                     }
                 };
 
-                let body_bytes = req.collect().await
+                let body_bytes = req
+                    .collect()
+                    .await
                     .map(|b| b.to_bytes())
                     .unwrap_or_default();
 
-                let hyper_client = HyperClient::builder(
-                    hyper_util::rt::TokioExecutor::new()
-                ).build_http();
+                let hyper_client =
+                    HyperClient::builder(hyper_util::rt::TokioExecutor::new()).build_http();
 
                 let upstream_req = Request::builder()
                     .method(&method)
@@ -127,19 +129,30 @@ async fn handle_connection(
                 match hyper_client.request(upstream_req).await {
                     Ok(up_resp) => {
                         let status = up_resp.status();
-                        let upstream_body = up_resp.collect().await
+                        let upstream_body = up_resp
+                            .collect()
+                            .await
                             .map(|b| b.to_bytes())
                             .unwrap_or_default();
                         let body_str = String::from_utf8_lossy(&upstream_body).to_string();
 
                         state.metrics.record_request(
-                            &method.to_string(), uri.path(), elapsed, status.as_u16(),
+                            &method.to_string(),
+                            uri.path(),
+                            elapsed,
+                            status.as_u16(),
                         );
                         state.metrics.inc_allowed("policy");
-                        state.audit.log_event(
-                            &agent_id, &format!("{method} {uri}"), &uri.to_string(), "ALLOW",
-                            &trace_id,
-                        ).await;
+                        state
+                            .audit
+                            .log_event(
+                                &agent_id,
+                                &format!("{method} {uri}"),
+                                &uri.to_string(),
+                                "ALLOW",
+                                &trace_id,
+                            )
+                            .await;
 
                         let body_bytes = Bytes::from(body_str);
                         Ok(Response::builder()
@@ -161,21 +174,41 @@ async fn handle_connection(
             GovernanceOutcome::Deny { reason, category } => {
                 state.metrics.inc_denied(&category);
                 state.metrics.record_request(
-                    &method.to_string(), uri.path(), start.elapsed(), StatusCode::FORBIDDEN.as_u16(),
+                    &method.to_string(),
+                    uri.path(),
+                    start.elapsed(),
+                    StatusCode::FORBIDDEN.as_u16(),
                 );
-                state.audit.log_event(
-                    &agent_id, &format!("{method} {uri}"), &uri.to_string(), "DENY", &trace_id,
-                ).await;
+                state
+                    .audit
+                    .log_event(
+                        &agent_id,
+                        &format!("{method} {uri}"),
+                        &uri.to_string(),
+                        "DENY",
+                        &trace_id,
+                    )
+                    .await;
                 deny(StatusCode::FORBIDDEN, &reason, &category)
             }
             GovernanceOutcome::Escalate { reason, category } => {
                 state.metrics.inc_denied(&category);
                 state.metrics.record_request(
-                    &method.to_string(), uri.path(), start.elapsed(), StatusCode::FORBIDDEN.as_u16(),
+                    &method.to_string(),
+                    uri.path(),
+                    start.elapsed(),
+                    StatusCode::FORBIDDEN.as_u16(),
                 );
-                state.audit.log_event(
-                    &agent_id, &format!("{method} {uri}"), &uri.to_string(), "ESCALATE", &trace_id,
-                ).await;
+                state
+                    .audit
+                    .log_event(
+                        &agent_id,
+                        &format!("{method} {uri}"),
+                        &uri.to_string(),
+                        "ESCALATE",
+                        &trace_id,
+                    )
+                    .await;
                 deny(StatusCode::FORBIDDEN, &reason, &category)
             }
         }
@@ -186,7 +219,9 @@ async fn handle_connection(
 
 fn build_upstream_url(method: &Method, uri: &hyper::Uri) -> Option<String> {
     let host = uri.host()?;
-    let port = uri.port_u16().unwrap_or(if method == Method::CONNECT { 443 } else { 80 });
+    let port = uri
+        .port_u16()
+        .unwrap_or(if method == Method::CONNECT { 443 } else { 80 });
     let path = uri.path_and_query().map(|pq| pq.as_str()).unwrap_or("/");
     Some(format!("http://{host}:{port}{path}"))
 }

@@ -34,7 +34,8 @@ impl WasmPolicyEngine {
         let ctx_json = serde_json::to_string(ctx)?;
         let ctx_bytes = ctx_json.as_bytes();
 
-        let memory = instance.get_memory(&mut store, "memory")
+        let memory = instance
+            .get_memory(&mut store, "memory")
             .ok_or_else(|| anyhow::anyhow!("WASM module has no memory export"))?;
 
         // Allocate memory in WASM and write context bytes

@@ -54,7 +54,11 @@ impl AegisEvent {
 
     pub fn description(&self) -> String {
         match &self.details {
-            EventDetails::File { filename, is_sensitive, .. } => {
+            EventDetails::File {
+                filename,
+                is_sensitive,
+                ..
+            } => {
                 format!(
                     "{}{}",
                     if *is_sensitive { "SENSITIVE " } else { "" },
@@ -76,7 +80,10 @@ impl std::fmt::Display for AegisEvent {
         write!(
             f,
             "[{}] pid={} comm={} {}",
-            self.event_type, self.pid, self.comm, self.description()
+            self.event_type,
+            self.pid,
+            self.comm,
+            self.description()
         )
     }
 }

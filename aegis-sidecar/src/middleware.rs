@@ -1,4 +1,4 @@
-use hyper::{HeaderMap, header};
+use hyper::{header, HeaderMap};
 use tracing::{debug, warn};
 
 use aegis_common::types::PolicyContext;
@@ -20,10 +20,7 @@ pub fn extract_agent_id(headers: &HeaderMap) -> Option<String> {
     {
         return Some(id.to_string());
     }
-    if let Some(id) = headers
-        .get("x-agent-id")
-        .and_then(|v| v.to_str().ok())
-    {
+    if let Some(id) = headers.get("x-agent-id").and_then(|v| v.to_str().ok()) {
         return Some(id.to_string());
     }
     // SPIFFE SVID from mTLS
@@ -34,7 +31,8 @@ pub fn extract_agent_id(headers: &HeaderMap) -> Option<String> {
         // Extract SPIFFE ID from the cert header
         if let Some(spiffe_id) = svid.split(',').find_map(|part| {
             let p = part.trim();
-            p.strip_prefix("URI=").or_else(|| p.strip_prefix("Subject="))
+            p.strip_prefix("URI=")
+                .or_else(|| p.strip_prefix("Subject="))
         }) {
             return Some(spiffe_id.to_string());
         }
@@ -82,7 +80,11 @@ pub async fn run_governance(
                     );
                     return GovernanceOutcome::Escalate {
                         reason: result.reason,
-                        category: result.violated_policies.first().cloned().unwrap_or_default(),
+                        category: result
+                            .violated_policies
+                            .first()
+                            .cloned()
+                            .unwrap_or_default(),
                     };
                 }
                 Decision::Allow => {
@@ -150,10 +152,20 @@ pub async fn run_governance(
 
 fn extract_tool_name(resource: &str) -> Option<String> {
     if let Some(tool) = resource.strip_prefix("/tools/") {
-        return Some(tool.split(&['/', '?', '&']).next().unwrap_or(tool).to_string());
+        return Some(
+            tool.split(&['/', '?', '&'])
+                .next()
+                .unwrap_or(tool)
+                .to_string(),
+        );
     }
     if let Some(tool) = resource.strip_prefix("/v1/tools/") {
-        return Some(tool.split(&['/', '?', '&']).next().unwrap_or(tool).to_string());
+        return Some(
+            tool.split(&['/', '?', '&'])
+                .next()
+                .unwrap_or(tool)
+                .to_string(),
+        );
     }
     let uri: hyper::Uri = resource.parse().ok()?;
     uri.query().and_then(|q| {

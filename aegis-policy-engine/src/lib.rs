@@ -9,10 +9,10 @@ use tracing::{debug, info, warn};
 
 mod builtins;
 mod compiler;
-mod parser;
-mod wasm;
 mod engine;
+mod parser;
 pub mod test_framework;
+mod wasm;
 
 pub use builtins::*;
 pub use compiler::RegoCompiler;
@@ -77,13 +77,9 @@ impl std::fmt::Debug for BuiltinRegistry {
 
 impl BuiltinRegistry {
     pub fn new() -> Self {
-        let mut functions: HashMap<String, Box<dyn BuiltinFunction + Send + Sync>> =
-            HashMap::new();
+        let mut functions: HashMap<String, Box<dyn BuiltinFunction + Send + Sync>> = HashMap::new();
 
-        functions.insert(
-            "aegis.is_recursion_loop".into(),
-            Box::new(IsRecursionLoop),
-        );
+        functions.insert("aegis.is_recursion_loop".into(), Box::new(IsRecursionLoop));
         functions.insert("aegis.budget_exceeded".into(), Box::new(BudgetExceeded));
         functions.insert("aegis.tool_allowed".into(), Box::new(ToolAllowed));
         functions.insert("aegis.url_allowed".into(), Box::new(UrlAllowed));
@@ -92,15 +88,9 @@ impl BuiltinRegistry {
             "aegis.reasoning_risk_score".into(),
             Box::new(ReasoningRiskScore),
         );
-        functions.insert(
-            "aegis.environment_match".into(),
-            Box::new(EnvironmentMatch),
-        );
+        functions.insert("aegis.environment_match".into(), Box::new(EnvironmentMatch));
         functions.insert("aegis.delegation_depth".into(), Box::new(DelegationDepth));
-        functions.insert(
-            "aegis.in_business_hours".into(),
-            Box::new(InBusinessHours),
-        );
+        functions.insert("aegis.in_business_hours".into(), Box::new(InBusinessHours));
         functions.insert("aegis.hash_equals".into(), Box::new(HashEquals));
 
         Self { functions }
@@ -110,7 +100,11 @@ impl BuiltinRegistry {
         self.functions.get(name).map(|f| f.as_ref())
     }
 
-    pub fn evaluate(&self, name: &str, args: &[serde_json::Value]) -> Result<serde_json::Value, String> {
+    pub fn evaluate(
+        &self,
+        name: &str,
+        args: &[serde_json::Value],
+    ) -> Result<serde_json::Value, String> {
         match self.get(name) {
             Some(f) => f.evaluate(args),
             None => Err(format!("unknown builtin: {name}")),
@@ -121,7 +115,9 @@ impl BuiltinRegistry {
 #[derive(Debug)]
 struct IsRecursionLoop;
 impl BuiltinFunction for IsRecursionLoop {
-    fn name(&self) -> &'static str { "aegis.is_recursion_loop" }
+    fn name(&self) -> &'static str {
+        "aegis.is_recursion_loop"
+    }
     fn evaluate(&self, args: &[serde_json::Value]) -> Result<serde_json::Value, String> {
         let depth = args.get(0).and_then(|v| v.as_u64()).unwrap_or(0);
         let max_depth = args.get(1).and_then(|v| v.as_u64()).unwrap_or(5);
@@ -132,7 +128,9 @@ impl BuiltinFunction for IsRecursionLoop {
 #[derive(Debug)]
 struct BudgetExceeded;
 impl BuiltinFunction for BudgetExceeded {
-    fn name(&self) -> &'static str { "aegis.budget_exceeded" }
+    fn name(&self) -> &'static str {
+        "aegis.budget_exceeded"
+    }
     fn evaluate(&self, args: &[serde_json::Value]) -> Result<serde_json::Value, String> {
         let spent = args.get(0).and_then(|v| v.as_f64()).unwrap_or(0.0);
         let limit = args.get(1).and_then(|v| v.as_f64()).unwrap_or(100.0);
@@ -143,12 +141,16 @@ impl BuiltinFunction for BudgetExceeded {
 #[derive(Debug)]
 struct ToolAllowed;
 impl BuiltinFunction for ToolAllowed {
-    fn name(&self) -> &'static str { "aegis.tool_allowed" }
+    fn name(&self) -> &'static str {
+        "aegis.tool_allowed"
+    }
     fn evaluate(&self, args: &[serde_json::Value]) -> Result<serde_json::Value, String> {
         let tool = args.get(0).and_then(|v| v.as_str()).unwrap_or("");
-        let allowed_list = args.get(1).and_then(|v| v.as_array()).map(|a| {
-            a.iter().filter_map(|v| v.as_str()).collect::<Vec<_>>()
-        }).unwrap_or_default();
+        let allowed_list = args
+            .get(1)
+            .and_then(|v| v.as_array())
+            .map(|a| a.iter().filter_map(|v| v.as_str()).collect::<Vec<_>>())
+            .unwrap_or_default();
         let allowed = allowed_list.is_empty() || allowed_list.contains(&tool);
         Ok(serde_json::Value::Bool(allowed))
     }
@@ -157,12 +159,20 @@ impl BuiltinFunction for ToolAllowed {
 #[derive(Debug)]
 struct UrlAllowed;
 impl BuiltinFunction for UrlAllowed {
-    fn name(&self) -> &'static str { "aegis.url_allowed" }
+    fn name(&self) -> &'static str {
+        "aegis.url_allowed"
+    }
     fn evaluate(&self, args: &[serde_json::Value]) -> Result<serde_json::Value, String> {
         let url = args.get(0).and_then(|v| v.as_str()).unwrap_or("");
-        let allowed = args.get(1).and_then(|v| v.as_array()).map(|a| {
-            a.iter().filter_map(|v| v.as_str()).any(|pattern| url.contains(pattern))
-        }).unwrap_or(true);
+        let allowed = args
+            .get(1)
+            .and_then(|v| v.as_array())
+            .map(|a| {
+                a.iter()
+                    .filter_map(|v| v.as_str())
+                    .any(|pattern| url.contains(pattern))
+            })
+            .unwrap_or(true);
         Ok(serde_json::Value::Bool(allowed))
     }
 }
@@ -170,12 +180,20 @@ impl BuiltinFunction for UrlAllowed {
 #[derive(Debug)]
 struct ModelAllowed;
 impl BuiltinFunction for ModelAllowed {
-    fn name(&self) -> &'static str { "aegis.model_allowed" }
+    fn name(&self) -> &'static str {
+        "aegis.model_allowed"
+    }
     fn evaluate(&self, args: &[serde_json::Value]) -> Result<serde_json::Value, String> {
         let model = args.get(0).and_then(|v| v.as_str()).unwrap_or("");
-        let allowed = args.get(1).and_then(|v| v.as_array()).map(|a| {
-            a.iter().filter_map(|v| v.as_str()).any(|m| model.starts_with(m))
-        }).unwrap_or(true);
+        let allowed = args
+            .get(1)
+            .and_then(|v| v.as_array())
+            .map(|a| {
+                a.iter()
+                    .filter_map(|v| v.as_str())
+                    .any(|m| model.starts_with(m))
+            })
+            .unwrap_or(true);
         Ok(serde_json::Value::Bool(allowed))
     }
 }
@@ -183,13 +201,26 @@ impl BuiltinFunction for ModelAllowed {
 #[derive(Debug)]
 struct ReasoningRiskScore;
 impl BuiltinFunction for ReasoningRiskScore {
-    fn name(&self) -> &'static str { "aegis.reasoning_risk_score" }
+    fn name(&self) -> &'static str {
+        "aegis.reasoning_risk_score"
+    }
     fn evaluate(&self, args: &[serde_json::Value]) -> Result<serde_json::Value, String> {
         let text = args.get(0).and_then(|v| v.as_str()).unwrap_or("");
         let high_risk_patterns = [
-            "ignore", "bypass", "override", "delete", "drop ", "rm -rf",
-            "sudo", "chmod 777", "admin", "password", "secret", "token",
-            "credit card", "social security",
+            "ignore",
+            "bypass",
+            "override",
+            "delete",
+            "drop ",
+            "rm -rf",
+            "sudo",
+            "chmod 777",
+            "admin",
+            "password",
+            "secret",
+            "token",
+            "credit card",
+            "social security",
         ];
         let mut score = 0.0;
         for pattern in &high_risk_patterns {
@@ -206,7 +237,9 @@ impl BuiltinFunction for ReasoningRiskScore {
 #[derive(Debug)]
 struct EnvironmentMatch;
 impl BuiltinFunction for EnvironmentMatch {
-    fn name(&self) -> &'static str { "aegis.environment_match" }
+    fn name(&self) -> &'static str {
+        "aegis.environment_match"
+    }
     fn evaluate(&self, args: &[serde_json::Value]) -> Result<serde_json::Value, String> {
         let resource_env = args.get(0).and_then(|v| v.as_str()).unwrap_or("");
         let current_env = args.get(1).and_then(|v| v.as_str()).unwrap_or("");
@@ -220,7 +253,9 @@ impl BuiltinFunction for EnvironmentMatch {
 #[derive(Debug)]
 struct DelegationDepth;
 impl BuiltinFunction for DelegationDepth {
-    fn name(&self) -> &'static str { "aegis.delegation_depth" }
+    fn name(&self) -> &'static str {
+        "aegis.delegation_depth"
+    }
     fn evaluate(&self, args: &[serde_json::Value]) -> Result<serde_json::Value, String> {
         let depth = args.get(0).and_then(|v| v.as_u64()).unwrap_or(0);
         let max = args.get(1).and_then(|v| v.as_u64()).unwrap_or(3);
@@ -231,7 +266,9 @@ impl BuiltinFunction for DelegationDepth {
 #[derive(Debug)]
 struct InBusinessHours;
 impl BuiltinFunction for InBusinessHours {
-    fn name(&self) -> &'static str { "aegis.in_business_hours" }
+    fn name(&self) -> &'static str {
+        "aegis.in_business_hours"
+    }
     fn evaluate(&self, _args: &[serde_json::Value]) -> Result<serde_json::Value, String> {
         let now = chrono::Utc::now();
         let hour = now.hour();
@@ -245,11 +282,13 @@ impl BuiltinFunction for InBusinessHours {
 #[derive(Debug)]
 struct HashEquals;
 impl BuiltinFunction for HashEquals {
-    fn name(&self) -> &'static str { "aegis.hash_equals" }
+    fn name(&self) -> &'static str {
+        "aegis.hash_equals"
+    }
     fn evaluate(&self, args: &[serde_json::Value]) -> Result<serde_json::Value, String> {
         let data = args.get(0).and_then(|v| v.as_str()).unwrap_or("");
         let expected = args.get(1).and_then(|v| v.as_str()).unwrap_or("");
-        use sha2::{Sha256, Digest};
+        use sha2::{Digest, Sha256};
         let hash = hex::encode(Sha256::digest(data.as_bytes()));
         Ok(serde_json::Value::Bool(hash == expected))
     }

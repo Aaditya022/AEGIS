@@ -69,10 +69,15 @@ impl PolicyEngine {
         let start = Instant::now();
 
         // Builtin: reasoning risk score
-        let prompt_risk = self.builtins.evaluate(
-            "aegis.reasoning_risk_score",
-            &[serde_json::Value::String(ctx.operation.clone())],
-        ).unwrap_or(serde_json::Value::Number(serde_json::Number::from_f64(0.0).unwrap()));
+        let prompt_risk = self
+            .builtins
+            .evaluate(
+                "aegis.reasoning_risk_score",
+                &[serde_json::Value::String(ctx.operation.clone())],
+            )
+            .unwrap_or(serde_json::Value::Number(
+                serde_json::Number::from_f64(0.0).unwrap(),
+            ));
 
         let prompt_risk = prompt_risk.as_f64().unwrap_or(0.0);
 
@@ -121,7 +126,9 @@ impl PolicyEngine {
                     prompt_risk > threshold
                 }
                 crate::POLICY_DELEGATION => {
-                    let chain_depth = ctx.extra.get("delegation_depth")
+                    let chain_depth = ctx
+                        .extra
+                        .get("delegation_depth")
                         .and_then(|s| s.parse::<u64>().ok())
                         .unwrap_or(0);
                     let max = parse_condition_int(&policy.rego_source, 3);
@@ -144,7 +151,10 @@ impl PolicyEngine {
 
                 let elapsed = start.elapsed().as_nanos() as i64;
                 self.metrics.evaluations += 1;
-                self.metrics.avg_eval_time_ns = (self.metrics.avg_eval_time_ns * (self.metrics.evaluations - 1) as f64 + elapsed as f64) / self.metrics.evaluations as f64;
+                self.metrics.avg_eval_time_ns = (self.metrics.avg_eval_time_ns
+                    * (self.metrics.evaluations - 1) as f64
+                    + elapsed as f64)
+                    / self.metrics.evaluations as f64;
 
                 debug!(
                     policy = %policy.name,
@@ -156,7 +166,9 @@ impl PolicyEngine {
 
                 return Ok(PolicyResult {
                     decision,
-                    reason: policy.description.clone()
+                    reason: policy
+                        .description
+                        .clone()
                         .unwrap_or_else(|| format!("policy '{}' violated", policy.name)),
                     violated_policies: vec![policy.id.clone()],
                     evaluation_time_ns: elapsed,

@@ -1,6 +1,6 @@
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use aegis_policy_engine::*;
 use aegis_common::types::*;
+use aegis_policy_engine::*;
+use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
 fn benchmark_policy_match(c: &mut Criterion) {
     let ctx = PolicyContext {
@@ -16,15 +16,11 @@ fn benchmark_policy_match(c: &mut Criterion) {
 
     c.bench_function("recursion_detection", |b| {
         let trace = vec!["tool_a".into(), "tool_a".into(), "tool_a".into()];
-        b.iter(|| {
-            black_box(detect_recursion(&trace, "tool_a", 3))
-        })
+        b.iter(|| black_box(detect_recursion(&trace, "tool_a", 3)))
     });
 
     c.bench_function("budget_check", |b| {
-        b.iter(|| {
-            black_box(budget_exceeded(95.0, 100.0))
-        })
+        b.iter(|| black_box(budget_exceeded(95.0, 100.0)))
     });
 }
 

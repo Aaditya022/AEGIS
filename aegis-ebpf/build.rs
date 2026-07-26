@@ -68,7 +68,10 @@ fn main() {
                 0x00, 0x00, // shstrndx (0)
             ];
             fs::write(&out, elf_header).ok();
-            println!("cargo:warning=Created stub {}.o (clang not available)", program.replace(".bpf.c", ""));
+            println!(
+                "cargo:warning=Created stub {}.o (clang not available)",
+                program.replace(".bpf.c", "")
+            );
         }
     }
 
