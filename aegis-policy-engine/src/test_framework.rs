@@ -1,5 +1,5 @@
 use crate::PolicyEngine;
-use aegis_common::types::{Decision, PolicyContext, PolicyResult};
+use aegis_common::types::{Decision, PolicyContext};
 
 pub struct PolicyTest {
     pub name: String,

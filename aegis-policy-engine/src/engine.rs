@@ -3,7 +3,7 @@ use std::time::Instant;
 use aegis_common::types::{Decision, PolicyContext, PolicyResult};
 use tracing::{debug, info, warn};
 
-use crate::{BuiltinRegistry, Policy, PolicyEngine};
+use crate::{BuiltinRegistry, EngineMetrics, Policy, PolicyEngine};
 
 impl PolicyEngine {
     pub fn new(policy_dir: &str) -> anyhow::Result<Self> {
@@ -21,8 +21,8 @@ impl PolicyEngine {
             if entry.path().extension().map_or(false, |e| e == "rego") {
                 match crate::parse_rego(&content) {
                     Ok(policy) => {
-                        policies.push(policy);
                         debug!(name = %policy.name, file = %entry.file_name().to_string_lossy(), "Loaded Rego policy");
+                        policies.push(policy);
                     }
                     Err(e) => {
                         warn!(file = %entry.file_name().to_string_lossy(), error = %e, "Failed to parse Rego policy");
@@ -86,7 +86,7 @@ impl PolicyEngine {
                 continue;
             }
 
-            let violated = match policy.category {
+            let violated = match policy.category.as_str() {
                 crate::POLICY_RECURSION => {
                     let depth = ctx.recursion_depth as u64;
                     let max = parse_condition_int(&policy.rego_source, 5);

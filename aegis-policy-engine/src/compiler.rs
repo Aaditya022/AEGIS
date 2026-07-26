@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -82,7 +81,8 @@ impl RegoCompiler {
 
                 match self.compile_to_wasm(&source, package) {
                     Ok(wasm) => {
-                        let policy = crate::parse_rego(&source)?;
+                        let policy = crate::parse_rego(&source)
+                            .map_err(|e| anyhow::anyhow!("parse error: {e}"))?;
                         compiled.push(Policy {
                             wasm_binary: Some(wasm),
                             ..policy
@@ -135,7 +135,7 @@ impl RegoCompiler {
             {
                 let parts: Vec<&str> = line.split('=').collect();
                 if parts.len() == 2 {
-                    let left = parts[0].trim();
+                    let _left = parts[0].trim();
                     let right = parts[1].trim();
                     if !right.starts_with('{') && !right.starts_with('[') && !right.starts_with('"')
                     {

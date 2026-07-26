@@ -1,11 +1,11 @@
 /// Agent-specific built-in functions for Rego policy evaluation.
 /// These extend OPA with agent-specific primitives.
-use std::collections::HashSet;
+use chrono::{Datelike, Timelike};
 
 /// Detect if an operation is a recursive call (same tool within N steps)
 pub fn detect_recursion(trace: &[String], current_tool: &str, max_depth: usize) -> bool {
     let recent: Vec<&String> = trace.iter().rev().take(max_depth).collect();
-    let count = recent.iter().filter(|t| *t == current_tool).count();
+    let count = recent.iter().filter(|t| ***t == *current_tool).count();
     count >= max_depth
 }
 
@@ -31,7 +31,7 @@ pub fn reasoning_risk_score(text: &str) -> f64 {
         "ignore previous",
         "disregard",
     ];
-    let mut score = 0.0;
+    let mut score: f64 = 0.0;
     for pattern in &high_risk_patterns {
         if text.to_lowercase().contains(pattern) {
             score += 0.15;

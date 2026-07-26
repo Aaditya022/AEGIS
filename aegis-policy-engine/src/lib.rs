@@ -1,11 +1,6 @@
 use std::collections::HashMap;
-use std::path::Path;
-use std::sync::Arc;
-use std::time::{Duration, Instant};
 
-use aegis_common::types::{Decision, PolicyContext, PolicyResult};
-use tokio::sync::RwLock;
-use tracing::{debug, info, warn};
+use chrono::{Datelike, Timelike};
 
 mod builtins;
 mod compiler;
@@ -16,7 +11,6 @@ mod wasm;
 
 pub use builtins::*;
 pub use compiler::RegoCompiler;
-pub use engine::*;
 pub use parser::*;
 
 pub const POLICY_RECURSION: &str = "recursion";
@@ -96,7 +90,7 @@ impl BuiltinRegistry {
         Self { functions }
     }
 
-    pub fn get(&self, name: &str) -> Option<&dyn BuiltinFunction> {
+    pub fn get(&self, name: &str) -> Option<&(dyn BuiltinFunction + Send + Sync)> {
         self.functions.get(name).map(|f| f.as_ref())
     }
 
@@ -109,6 +103,12 @@ impl BuiltinRegistry {
             Some(f) => f.evaluate(args),
             None => Err(format!("unknown builtin: {name}")),
         }
+    }
+}
+
+impl Default for BuiltinRegistry {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -222,14 +222,15 @@ impl BuiltinFunction for ReasoningRiskScore {
             "credit card",
             "social security",
         ];
-        let mut score = 0.0;
+        let mut score: f64 = 0.0;
         for pattern in &high_risk_patterns {
             if text.to_lowercase().contains(pattern) {
                 score += 0.15;
             }
         }
         Ok(serde_json::Value::Number(
-            serde_json::Number::from_f64(score.min(1.0)).unwrap_or_default(),
+            serde_json::Number::from_f64(score.min(1.0))
+                .unwrap_or(serde_json::Number::from_f64(0.0).unwrap()),
         ))
     }
 }
