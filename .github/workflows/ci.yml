@@ -184,7 +184,7 @@ jobs:
         run: cargo bench --workspace -- --output-format bencher | tee benchmark-output.txt
 
       - name: Upload benchmark artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: benchmarks
           path: |
@@ -193,14 +193,14 @@ jobs:
           retention-days: 30
 
       - name: Upload nextest results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: nextest-results
           path: nextest-results.json
           retention-days: 30
 
       - name: Upload coverage
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage
           path: |
