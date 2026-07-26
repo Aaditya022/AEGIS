@@ -4,7 +4,7 @@ use std::time::Duration;
 
 use aegis_common::crypto;
 use chrono::Utc;
-use tokio::sync::{Mutex, RwLock};
+use tokio::sync::Mutex;
 use tokio::time;
 use tracing::{debug, error, info, warn};
 

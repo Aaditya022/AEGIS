@@ -32,7 +32,7 @@ impl MetricsRegistry {
         Self::new()
     }
 
-    pub fn record_request(&self, method: &str, path: &str, duration: Duration, status: u16) {
+    pub fn record_request(&self, _method: &str, _path: &str, duration: Duration, _status: u16) {
         self.counters.requests_total.fetch_add(1, Ordering::Relaxed);
         self.counters
             .request_duration_ns

@@ -3,7 +3,7 @@ use aegis_policy_engine::*;
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
 fn benchmark_policy_match(c: &mut Criterion) {
-    let ctx = PolicyContext {
+    let _ctx = PolicyContext {
         agent_id: "test-agent".into(),
         operation: "tool.call".into(),
         resource: "delete-database".into(),

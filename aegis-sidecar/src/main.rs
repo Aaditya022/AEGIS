@@ -112,11 +112,15 @@ async fn main() -> anyhow::Result<()> {
         serve_health(health_listener, state).await;
     });
 
+    let mut terminate_signal =
+        tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
+            .expect("failed to create SIGTERM handler");
+
     tokio::select! {
         _ = signal::ctrl_c() => {
             info!("Shutdown signal received");
         }
-        _ = tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate()).unwrap().recv() => {
+        _ = terminate_signal.recv() => {
             info!("SIGTERM received");
         }
     }

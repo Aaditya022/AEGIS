@@ -1,9 +1,6 @@
 use std::collections::HashMap;
-use std::sync::Arc;
-use std::time::Duration;
 
-use tokio::sync::RwLock;
-use tracing::{debug, error, info, warn};
+use tracing::info;
 
 /// Manages eBPF programs for infrastructure-plane verification.
 /// In production, this uses the `aya` crate to load and attach eBPF programs.

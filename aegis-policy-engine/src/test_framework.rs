@@ -254,7 +254,7 @@ mod tests {
     #[test]
     fn test_default_compliance_suite() {
         let engine = PolicyEngine::default();
-        let mut suite = PolicyTestSuite::default_compliance_suite(engine);
+        let suite = PolicyTestSuite::default_compliance_suite(engine);
         let results = suite.run_all();
         let summary = suite.summary(&results);
 

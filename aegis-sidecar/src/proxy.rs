@@ -8,10 +8,12 @@ use hyper::{Method, Request, Response, StatusCode};
 use hyper_util::client::legacy::Client as HyperClient;
 use hyper_util::rt::TokioIo;
 use tokio::net::TcpListener;
-use tracing::{debug, error, info, warn, Instrument, Span};
+use tracing::{debug, error, info, Instrument};
 
 use crate::middleware::GovernanceOutcome;
 use crate::AppState;
+
+type ProxyResult = Result<hyper::Response<http_body_util::Full<bytes::Bytes>>, hyper::Error>;
 
 type ProxyResult = std::result::Result<Response<Full<Bytes>>, hyper::Error>;
 
@@ -29,12 +31,13 @@ impl Proxy {
                 }
             };
 
+            let sidecar_id = state.config.read().await.sidecar_id.clone();
             let state = state.clone();
             tokio::spawn(async move {
                 let span = tracing::info_span!(
                     "connection",
                     peer = %peer,
-                    sidecar_id = %state.config.read().await.sidecar_id,
+                    sidecar_id = %sidecar_id,
                 );
                 async {
                     let io = TokioIo::new(stream);

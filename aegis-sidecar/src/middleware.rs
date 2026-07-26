@@ -1,4 +1,4 @@
-use hyper::{header, HeaderMap};
+use hyper::HeaderMap;
 use tracing::{debug, warn};
 
 use aegis_common::types::PolicyContext;
