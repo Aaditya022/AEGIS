@@ -78,7 +78,7 @@ impl EbpfRuntime {
 
         // Attach loaded programs
         for (name, bpf) in &loaded {
-            if let Ok(programs) = bpf.programs() {
+            let programs = bpf.programs();
                 for (pname, program) in programs {
                     match program.try_into() {
                         Ok(tp) => {
