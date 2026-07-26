@@ -120,9 +120,6 @@ aegis/
 └── tests/                 # E2E, security, compliance tests
 ```
 
-## Roadmap
-
-See [ROADMAP.md](ROADMAP.md) for the complete development plan across 10 milestones.
 
 ## License
 
