@@ -34,7 +34,7 @@ impl PolicyEvaluator {
             engine: Arc::new(RwLock::new(engine)),
             control_plane_addr,
             policy_dir,
-            metrics: metrics.clone_handle(),
+            metrics: MetricsRegistry::new(),
             client: reqwest::Client::builder()
                 .timeout(Duration::from_secs(5))
                 .build()
@@ -46,7 +46,7 @@ impl PolicyEvaluator {
     }
 
     pub async fn evaluate(&self, ctx: &PolicyContext) -> anyhow::Result<PolicyResult> {
-        let engine = self.engine.read().await;
+        let engine = self.engine.write().await;
         let start = std::time::Instant::now();
 
         let result = match engine.evaluate(ctx) {

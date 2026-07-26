@@ -8,7 +8,7 @@ use hyper::{Method, Request, Response, StatusCode};
 use hyper_util::client::legacy::Client as HyperClient;
 use hyper_util::rt::TokioIo;
 use tokio::net::TcpListener;
-use tracing::{debug, error, info, warn, Span};
+use tracing::{debug, error, info, warn, Instrument, Span};
 
 use crate::middleware::GovernanceOutcome;
 use crate::AppState;

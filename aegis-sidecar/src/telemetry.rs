@@ -1,4 +1,5 @@
 use aegis_common::config::SidecarConfig;
+use opentelemetry::trace::TracerProvider;
 use opentelemetry::KeyValue;
 use opentelemetry_sdk::trace::{self, RandomIdGenerator, Sampler};
 use opentelemetry_sdk::Resource;

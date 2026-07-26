@@ -98,9 +98,10 @@ async fn main() -> anyhow::Result<()> {
 
     let proxy_listener = tokio::net::TcpListener::bind(&config.listen_addr).await?;
     let health_listener =
-        tokio::net::TcpListener::bind(config.listen_addr.replace(":9000", ":9090"))
-            .await
-            .unwrap_or_else(|_| tokio::net::TcpListener::bind("0.0.0.0:9090").unwrap());
+        match tokio::net::TcpListener::bind(config.listen_addr.replace(":9000", ":9090")).await {
+            Ok(l) => l,
+            Err(_) => tokio::net::TcpListener::bind("0.0.0.0:9090").await.unwrap(),
+        };
 
     let state_clone = state.clone();
     let proxy_handle = tokio::spawn(async move {
@@ -115,7 +116,7 @@ async fn main() -> anyhow::Result<()> {
         _ = signal::ctrl_c() => {
             info!("Shutdown signal received");
         }
-        _ = tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate()) => {
+        _ = tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate()).unwrap() => {
             info!("SIGTERM received");
         }
     }
@@ -129,43 +130,55 @@ async fn main() -> anyhow::Result<()> {
 }
 
 async fn serve_health(listener: tokio::net::TcpListener, state: Arc<AppState>) {
-    let service = hyper::service::service_fn(move |req: hyper::Request<hyper::body::Incoming>| {
-        let state = state.clone();
-        async move {
-            match req.uri().path() {
-                "/health" | "/ready" => Ok(hyper::Response::builder()
-                    .header("content-type", "application/json")
-                    .body(Full::new(Bytes::from(
-                        serde_json::json!({
-                            "status": "ok",
-                            "sidecar_id": state.config.read().await.sidecar_id,
-                            "agent_id": state.config.read().await.agent_id,
-                            "uptime_seconds": 0,
-                            "connections_active": 0,
-                        })
-                        .to_string(),
-                    )))
-                    .unwrap()),
-                "/metrics" => {
-                    let metrics = state.metrics.snapshot().await;
-                    Ok(hyper::Response::builder()
-                        .header("content-type", "text/plain")
-                        .body(Full::new(Bytes::from(metrics)))
-                        .unwrap())
-                }
-                _ => Ok(hyper::Response::builder()
-                    .status(404)
-                    .body(Full::new(Bytes::from("not found")))
-                    .unwrap()),
+    loop {
+        let (stream, _) = match listener.accept().await {
+            Ok(s) => s,
+            Err(e) => {
+                error!(error = %e, "Health accept error");
+                continue;
             }
-        }
-    });
-
-    if let Err(e) = hyper::server::conn::http1::Builder::new()
-        .serve_connection(hyper_util::rt::TokioIo::new(listener), service)
-        .await
-    {
-        error!(error = %e, "Health server error");
+        };
+        let state = state.clone();
+        tokio::spawn(async move {
+            let service =
+                hyper::service::service_fn(move |req: hyper::Request<hyper::body::Incoming>| {
+                    let state = state.clone();
+                    async move {
+                        match req.uri().path() {
+                            "/health" | "/ready" => Ok(hyper::Response::builder()
+                                .header("content-type", "application/json")
+                                .body(Full::new(Bytes::from(
+                                    serde_json::json!({
+                                        "status": "ok",
+                                        "sidecar_id": state.config.read().await.sidecar_id,
+                                        "agent_id": state.config.read().await.agent_id,
+                                        "uptime_seconds": 0,
+                                        "connections_active": 0,
+                                    })
+                                    .to_string(),
+                                )))
+                                .unwrap()),
+                            "/metrics" => {
+                                let metrics = state.metrics.snapshot().await;
+                                Ok(hyper::Response::builder()
+                                    .header("content-type", "text/plain")
+                                    .body(Full::new(Bytes::from(metrics)))
+                                    .unwrap())
+                            }
+                            _ => Ok(hyper::Response::builder()
+                                .status(404)
+                                .body(Full::new(Bytes::from("not found")))
+                                .unwrap()),
+                        }
+                    }
+                });
+            if let Err(e) = hyper::server::conn::http1::Builder::new()
+                .serve_connection(hyper_util::rt::TokioIo::new(stream), service)
+                .await
+            {
+                error!(error = %e, "Health connection error");
+            }
+        });
     }
 }
 

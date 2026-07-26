@@ -5,7 +5,7 @@ use chrono::{Datelike, Timelike};
 mod builtins;
 mod compiler;
 mod engine;
-mod parser;
+pub mod parser;
 pub mod test_framework;
 mod wasm;
 
