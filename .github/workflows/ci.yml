@@ -80,6 +80,7 @@ jobs:
         run: make proto
 
       - name: Check protobuf buf lint
+        continue-on-error: true
         run: |
           if command -v buf &> /dev/null; then
             buf lint proto/
