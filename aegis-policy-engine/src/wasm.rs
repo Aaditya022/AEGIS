@@ -11,6 +11,7 @@ pub struct WasmPolicyEngine {
     module: Module,
 }
 
+#[allow(dead_code)]
 impl WasmPolicyEngine {
     pub fn new(wasm_bytes: &[u8]) -> anyhow::Result<Self> {
         let engine = Engine::default();
