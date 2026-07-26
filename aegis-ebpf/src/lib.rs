@@ -79,15 +79,14 @@ impl EbpfRuntime {
         // Attach loaded programs
         for (name, bpf) in &loaded {
             let programs = bpf.programs();
-                for (pname, program) in programs {
-                    match program.try_into() {
-                        Ok(tp) => {
-                            if let Err(e) = tp.load() {
-                                warn!(program = %pname, error = %e, "Failed to load tracepoint");
-                            }
+            for (pname, program) in programs {
+                match program.try_into() {
+                    Ok(tp) => {
+                        if let Err(e) = tp.load() {
+                            warn!(program = %pname, error = %e, "Failed to load tracepoint");
                         }
-                        Err(_) => {}
                     }
+                    Err(_) => {}
                 }
             }
         }
