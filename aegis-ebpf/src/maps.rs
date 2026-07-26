@@ -1,4 +1,4 @@
-use aya::maps::{HashMap, PerCpuArray, PerCpuHashMap, RingBuf};
+use aya::maps::{HashMap, PerCpuArray};
 use aya::Bpf;
 use tracing::debug;
 
@@ -6,18 +6,22 @@ use tracing::debug;
 
 /// Add a PID to the allowed_pids map
 pub fn add_pid_to_monitor(bpf: &Bpf, pid: u32) -> Result<(), anyhow::Error> {
-    if let Ok(mut map) = HashMap::<_, u32, u32>::try_from(bpf.map_mut("aegis_allowed_pids")?) {
-        map.insert(pid, 1, 0)?;
-        debug!(pid, "Added PID to eBPF monitor");
+    if let Some(map) = bpf.map_mut("aegis_allowed_pids") {
+        if let Ok(mut hmap) = HashMap::<_, u32, u32>::try_from(map) {
+            hmap.insert(pid, 1, 0)?;
+            debug!(pid, "Added PID to eBPF monitor");
+        }
     }
     Ok(())
 }
 
 /// Remove a PID from the allowed_pids map
 pub fn remove_pid_from_monitor(bpf: &Bpf, pid: u32) -> Result<(), anyhow::Error> {
-    if let Ok(mut map) = HashMap::<_, u32, u32>::try_from(bpf.map_mut("aegis_allowed_pids")?) {
-        map.remove(&pid)?;
-        debug!(pid, "Removed PID from eBPF monitor");
+    if let Some(map) = bpf.map_mut("aegis_allowed_pids") {
+        if let Ok(mut hmap) = HashMap::<_, u32, u32>::try_from(map) {
+            hmap.remove(&pid)?;
+            debug!(pid, "Removed PID from eBPF monitor");
+        }
     }
     Ok(())
 }
@@ -25,29 +29,34 @@ pub fn remove_pid_from_monitor(bpf: &Bpf, pid: u32) -> Result<(), anyhow::Error>
 /// Add a sensitive path pattern to the eBPF map
 pub fn add_sensitive_path(bpf: &Bpf, pattern: &str) -> Result<(), anyhow::Error> {
     let hash = calculate_fnv1a(pattern);
-    if let Ok(mut map) = HashMap::<_, u32, u32>::try_from(bpf.map_mut("sensitive_paths")?) {
-        map.insert(hash, 1, 0)?;
+    if let Some(map) = bpf.map_mut("sensitive_paths") {
+        if let Ok(mut hmap) = HashMap::<_, u32, u32>::try_from(map) {
+            hmap.insert(hash, 1, 0)?;
+        }
     }
     Ok(())
 }
 
 /// Block an IP address in the eBPF map
 pub fn block_ip(bpf: &Bpf, ip: u32) -> Result<(), anyhow::Error> {
-    if let Ok(mut map) = HashMap::<_, u32, u32>::try_from(bpf.map_mut("blocked_ips")?) {
-        map.insert(ip, 1, 0)?;
+    if let Some(map) = bpf.map_mut("blocked_ips") {
+        if let Ok(mut hmap) = HashMap::<_, u32, u32>::try_from(map) {
+            hmap.insert(ip, 1, 0)?;
+        }
     }
     Ok(())
 }
 
 /// Get current violation count from eBPF
 pub fn get_violation_count(bpf: &Bpf) -> Result<u64, anyhow::Error> {
-    if let Ok(mut map) = PerCpuArray::<_, u64>::try_from(bpf.map_mut("aegis_violations")?) {
-        let values = map.get(&0, 0)?;
-        let total: u64 = values.iter().sum();
-        Ok(total)
-    } else {
-        Ok(0)
+    if let Some(map) = bpf.map_mut("aegis_violations") {
+        if let Ok(mut hmap) = PerCpuArray::<_, u64>::try_from(map) {
+            let values = hmap.get(&0, 0)?;
+            let total: u64 = values.iter().sum();
+            return Ok(total);
+        }
     }
+    Ok(0)
 }
 
 fn calculate_fnv1a(input: &str) -> u32 {

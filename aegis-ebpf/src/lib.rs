@@ -1,10 +1,9 @@
-use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
 
 use tokio::sync::mpsc;
 use tokio::sync::RwLock;
-use tracing::{debug, error, info, warn};
+use tracing::{debug, info, warn};
 
 mod events;
 mod maps;
@@ -42,19 +41,19 @@ impl EbpfRuntime {
         let bpf_programs = [
             (
                 "syscall_monitor",
-                include_bytes_aligned!("bpf/syscall_monitor.bpf.o") as &[u8],
+                aya::include_bytes_aligned!("bpf/syscall_monitor.bpf.o") as &[u8],
             ),
             (
                 "tcp_monitor",
-                include_bytes_aligned!("bpf/tcp_monitor.bpf.o") as &[u8],
+                aya::include_bytes_aligned!("bpf/tcp_monitor.bpf.o") as &[u8],
             ),
             (
                 "file_access",
-                include_bytes_aligned!("bpf/file_access.bpf.o") as &[u8],
+                aya::include_bytes_aligned!("bpf/file_access.bpf.o") as &[u8],
             ),
             (
                 "credential_monitor",
-                include_bytes_aligned!("bpf/credential_monitor.bpf.o") as &[u8],
+                aya::include_bytes_aligned!("bpf/credential_monitor.bpf.o") as &[u8],
             ),
         ];
 
@@ -121,7 +120,7 @@ impl EbpfRuntime {
 
         if !self.simulated {
             if let Some(ref bpf) = self.bpf {
-                if let Ok(map) = bpf.map_mut("aegis_allowed_pids") {
+                if let Some(map) = bpf.map_mut("aegis_allowed_pids") {
                     if let Ok(mut hmap) = aya::maps::HashMap::<_, u32, u32>::try_from(map) {
                         let _ = hmap.insert(pid, 1, 0);
                     }
@@ -136,7 +135,7 @@ impl EbpfRuntime {
 
         if !self.simulated {
             if let Some(ref bpf) = self.bpf {
-                if let Ok(map) = bpf.map_mut("aegis_allowed_pids") {
+                if let Some(map) = bpf.map_mut("aegis_allowed_pids") {
                     if let Ok(mut hmap) = aya::maps::HashMap::<_, u32, u32>::try_from(map) {
                         let _ = hmap.remove(&pid);
                     }

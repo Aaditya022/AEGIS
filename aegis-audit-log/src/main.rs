@@ -150,6 +150,7 @@ impl AuditLogService {
         Ok(true)
     }
 
+    #[allow(dead_code)]
     async fn query(
         &self,
         agent_id: Option<&str>,

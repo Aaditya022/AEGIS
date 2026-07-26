@@ -3,9 +3,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 
 use tokio::sync::RwLock;
-use tracing::{debug, info, warn};
-
-use crate::events::*;
+use tracing::warn;
 
 /// Two-Plane Verification Engine
 /// Compares application-plane (πA) decisions with infrastructure-plane (πI) observations
@@ -46,6 +44,18 @@ pub struct DivergentEvent {
     pub resource: String,
     pub agent_id: String,
     pub timestamp_ns: u64,
+}
+
+impl Clone for TwoPlaneVerifier {
+    fn clone(&self) -> Self {
+        Self {
+            violations: AtomicU64::new(self.violations.load(Ordering::SeqCst)),
+            total_events: AtomicU64::new(self.total_events.load(Ordering::SeqCst)),
+            app_plane_decisions: self.app_plane_decisions.clone(),
+            infra_plane_observations: self.infra_plane_observations.clone(),
+            divergent_events: self.divergent_events.clone(),
+        }
+    }
 }
 
 impl TwoPlaneVerifier {
@@ -178,6 +188,10 @@ impl TwoPlaneVerifier {
                 && o.resource == addr
                 && o.actual_decision == "DENY"
         })
+    }
+
+    /// Periodic tick for maintenance
+    pub fn tick(&self) {
     }
 
     /// Get a summary of the Two-Plane Verification state
