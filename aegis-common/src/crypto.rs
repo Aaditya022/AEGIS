@@ -1,4 +1,5 @@
-use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
+use ed25519_dalek::{SecretKey, Signature, Signer, SigningKey, Verifier, VerifyingKey};
+use rand::RngCore;
 use sha2::{Digest, Sha256};
 use thiserror::Error;
 
@@ -33,7 +34,9 @@ pub fn verify(key: &VerifyingKey, data: &[u8], signature: &Signature) -> Result<
 
 pub fn generate_keypair() -> (SigningKey, VerifyingKey) {
     let mut rng = rand::thread_rng();
-    let signing_key = SigningKey::generate(&mut rng);
+    let mut bytes = [0u8; 32];
+    rng.fill_bytes(&mut bytes);
+    let signing_key = SigningKey::from_bytes(&SecretKey::from(bytes));
     let verifying_key = signing_key.verifying_key();
     (signing_key, verifying_key)
 }
