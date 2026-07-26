@@ -18,7 +18,7 @@ impl PolicyEngine {
             let entry = entry?;
             let content = std::fs::read_to_string(entry.path())?;
 
-            if entry.path().extension().map_or(false, |e| e == "rego") {
+            if entry.path().extension().is_some_and(|e| e == "rego") {
                 match crate::parse_rego(&content) {
                     Ok(policy) => {
                         debug!(name = %policy.name, file = %entry.file_name().to_string_lossy(), "Loaded Rego policy");

@@ -109,7 +109,7 @@ pub fn extract_rules(source: &str) -> Vec<String> {
         let line = line.trim();
         // Match lines like: "allow { ... }" or "deny[reason] { ... }"
         if line.starts_with("allow") || line.starts_with("deny") || line.starts_with("escalate") {
-            if let Some(name) = line.split(|c| c == ' ' || c == '[' || c == '{').next() {
+            if let Some(name) = line.split([' ', '[', '{']).next() {
                 rules.push(name.to_string());
             }
         }

@@ -1,0 +1,20 @@
+Lint	cargo clippy	2026-07-26T10:43:52.2665642Z ^[[1m^[[91merror^[[0m^[[1m: variable does not need to be mutable^[[0m
+Lint	cargo clippy	2026-07-26T10:43:52.2915913Z ^[[1m^[[91merror^[[0m^[[1m: field `cache_hits` is never read^[[0m
+Lint	cargo clippy	2026-07-26T10:43:52.2924403Z ^[[1m^[[91merror^[[0m^[[1m: field `output_dir` is never read^[[0m
+Lint	cargo clippy	2026-07-26T10:43:52.2930869Z ^[[1m^[[91merror^[[0m^[[1m: struct `WasmPolicyEngine` is never constructed^[[0m
+Lint	cargo clippy	2026-07-26T10:43:52.2935238Z ^[[1m^[[91merror^[[0m^[[1m: associated items `new` and `evaluate` are never used^[[0m
+Lint	cargo clippy	2026-07-26T10:43:52.3408327Z ^[[1m^[[91merror^[[0m^[[1m: this `map_or` can be simplified^[[0m
+Lint	cargo clippy	2026-07-26T10:43:52.3551869Z ^[[1m^[[91merror^[[0m^[[1m: this `map_or` can be simplified^[[0m
+Lint	cargo clippy	2026-07-26T10:43:52.4149777Z ^[[1m^[[91merror^[[0m^[[1m: this manual char comparison can be written more succinctly^[[0m
+Lint	cargo clippy	2026-07-26T10:43:52.5353001Z ^[[1m^[[91merror^[[0m^[[1m: accessing first element with `args.get(0)`^[[0m
+Lint	cargo clippy	2026-07-26T10:43:52.5367366Z ^[[1m^[[91merror^[[0m^[[1m: accessing first element with `args.get(0)`^[[0m
+Lint	cargo clippy	2026-07-26T10:43:52.5375744Z ^[[1m^[[91merror^[[0m^[[1m: accessing first element with `args.get(0)`^[[0m
+Lint	cargo clippy	2026-07-26T10:43:52.5383050Z ^[[1m^[[91merror^[[0m^[[1m: accessing first element with `args.get(0)`^[[0m
+Lint	cargo clippy	2026-07-26T10:43:52.5390220Z ^[[1m^[[91merror^[[0m^[[1m: accessing first element with `args.get(0)`^[[0m
+Lint	cargo clippy	2026-07-26T10:43:52.5397535Z ^[[1m^[[91merror^[[0m^[[1m: accessing first element with `args.get(0)`^[[0m
+Lint	cargo clippy	2026-07-26T10:43:52.5409146Z ^[[1m^[[91merror^[[0m^[[1m: accessing first element with `args.get(0)`^[[0m
+Lint	cargo clippy	2026-07-26T10:43:52.5418636Z ^[[1m^[[91merror^[[0m^[[1m: accessing first element with `args.get(0)`^[[0m
+Lint	cargo clippy	2026-07-26T10:43:52.5432293Z ^[[1m^[[91merror^[[0m^[[1m: accessing first element with `args.get(0)`^[[0m
+Lint	cargo clippy	2026-07-26T10:43:52.6205916Z ^[[1m^[[91merror^[[0m: could not compile `aegis-policy-engine` (lib test) due to 17 previous errors
+Lint	cargo clippy	2026-07-26T10:43:52.6208346Z ^[[1m^[[91merror^[[0m: could not compile `aegis-policy-engine` (lib) due to 17 previous errors
+Lint	cargo clippy	2026-07-26T10:43:52.7314097Z ##[error]Process completed with exit code 101.

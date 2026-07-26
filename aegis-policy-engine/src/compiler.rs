@@ -7,6 +7,7 @@ use crate::Policy;
 
 pub struct RegoCompiler {
     opa_binary: PathBuf,
+    #[allow(dead_code)]
     output_dir: PathBuf,
 }
 
@@ -75,7 +76,7 @@ impl RegoCompiler {
             let entry = entry?;
             let path = entry.path();
 
-            if path.extension().map_or(false, |e| e == "rego") {
+            if path.extension().is_some_and(|e| e == "rego") {
                 let source = std::fs::read_to_string(&path)?;
                 let package = extract_package_name(&source).unwrap_or("aegis");
 

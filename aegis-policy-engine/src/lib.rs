@@ -46,6 +46,7 @@ pub struct PolicyEngine {
 }
 
 #[derive(Default)]
+#[allow(dead_code)]
 pub struct EngineMetrics {
     evaluations: u64,
     cache_hits: u64,
@@ -119,7 +120,7 @@ impl BuiltinFunction for IsRecursionLoop {
         "aegis.is_recursion_loop"
     }
     fn evaluate(&self, args: &[serde_json::Value]) -> Result<serde_json::Value, String> {
-        let depth = args.get(0).and_then(|v| v.as_u64()).unwrap_or(0);
+        let depth = args.first().and_then(|v| v.as_u64()).unwrap_or(0);
         let max_depth = args.get(1).and_then(|v| v.as_u64()).unwrap_or(5);
         Ok(serde_json::Value::Bool(depth > max_depth))
     }
@@ -132,7 +133,7 @@ impl BuiltinFunction for BudgetExceeded {
         "aegis.budget_exceeded"
     }
     fn evaluate(&self, args: &[serde_json::Value]) -> Result<serde_json::Value, String> {
-        let spent = args.get(0).and_then(|v| v.as_f64()).unwrap_or(0.0);
+        let spent = args.first().and_then(|v| v.as_f64()).unwrap_or(0.0);
         let limit = args.get(1).and_then(|v| v.as_f64()).unwrap_or(100.0);
         Ok(serde_json::Value::Bool(spent > limit))
     }
@@ -145,7 +146,7 @@ impl BuiltinFunction for ToolAllowed {
         "aegis.tool_allowed"
     }
     fn evaluate(&self, args: &[serde_json::Value]) -> Result<serde_json::Value, String> {
-        let tool = args.get(0).and_then(|v| v.as_str()).unwrap_or("");
+        let tool = args.first().and_then(|v| v.as_str()).unwrap_or("");
         let allowed_list = args
             .get(1)
             .and_then(|v| v.as_array())
@@ -163,7 +164,7 @@ impl BuiltinFunction for UrlAllowed {
         "aegis.url_allowed"
     }
     fn evaluate(&self, args: &[serde_json::Value]) -> Result<serde_json::Value, String> {
-        let url = args.get(0).and_then(|v| v.as_str()).unwrap_or("");
+        let url = args.first().and_then(|v| v.as_str()).unwrap_or("");
         let allowed = args
             .get(1)
             .and_then(|v| v.as_array())
@@ -184,7 +185,7 @@ impl BuiltinFunction for ModelAllowed {
         "aegis.model_allowed"
     }
     fn evaluate(&self, args: &[serde_json::Value]) -> Result<serde_json::Value, String> {
-        let model = args.get(0).and_then(|v| v.as_str()).unwrap_or("");
+        let model = args.first().and_then(|v| v.as_str()).unwrap_or("");
         let allowed = args
             .get(1)
             .and_then(|v| v.as_array())
@@ -205,7 +206,7 @@ impl BuiltinFunction for ReasoningRiskScore {
         "aegis.reasoning_risk_score"
     }
     fn evaluate(&self, args: &[serde_json::Value]) -> Result<serde_json::Value, String> {
-        let text = args.get(0).and_then(|v| v.as_str()).unwrap_or("");
+        let text = args.first().and_then(|v| v.as_str()).unwrap_or("");
         let high_risk_patterns = [
             "ignore",
             "bypass",
@@ -242,7 +243,7 @@ impl BuiltinFunction for EnvironmentMatch {
         "aegis.environment_match"
     }
     fn evaluate(&self, args: &[serde_json::Value]) -> Result<serde_json::Value, String> {
-        let resource_env = args.get(0).and_then(|v| v.as_str()).unwrap_or("");
+        let resource_env = args.first().and_then(|v| v.as_str()).unwrap_or("");
         let current_env = args.get(1).and_then(|v| v.as_str()).unwrap_or("");
         let match_ = resource_env == current_env
             || (current_env == "staging" && !resource_env.contains("production"))
@@ -258,7 +259,7 @@ impl BuiltinFunction for DelegationDepth {
         "aegis.delegation_depth"
     }
     fn evaluate(&self, args: &[serde_json::Value]) -> Result<serde_json::Value, String> {
-        let depth = args.get(0).and_then(|v| v.as_u64()).unwrap_or(0);
+        let depth = args.first().and_then(|v| v.as_u64()).unwrap_or(0);
         let max = args.get(1).and_then(|v| v.as_u64()).unwrap_or(3);
         Ok(serde_json::Value::Bool(depth <= max))
     }
@@ -287,7 +288,7 @@ impl BuiltinFunction for HashEquals {
         "aegis.hash_equals"
     }
     fn evaluate(&self, args: &[serde_json::Value]) -> Result<serde_json::Value, String> {
-        let data = args.get(0).and_then(|v| v.as_str()).unwrap_or("");
+        let data = args.first().and_then(|v| v.as_str()).unwrap_or("");
         let expected = args.get(1).and_then(|v| v.as_str()).unwrap_or("");
         use sha2::{Digest, Sha256};
         let hash = hex::encode(Sha256::digest(data.as_bytes()));

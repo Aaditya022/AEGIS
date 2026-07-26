@@ -4,6 +4,7 @@ use aegis_common::types::{Decision, PolicyContext, PolicyResult};
 use tracing::debug;
 use wasmtime::{Engine, Linker, Module, Store};
 
+#[allow(dead_code)]
 pub struct WasmPolicyEngine {
     engine: Engine,
     linker: Linker<()>,
@@ -14,7 +15,7 @@ impl WasmPolicyEngine {
     pub fn new(wasm_bytes: &[u8]) -> anyhow::Result<Self> {
         let engine = Engine::default();
         let module = Module::new(&engine, wasm_bytes)?;
-        let mut linker = Linker::new(&engine);
+        let linker = Linker::new(&engine);
 
         Ok(Self {
             engine,
