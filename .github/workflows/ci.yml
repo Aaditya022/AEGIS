@@ -49,6 +49,7 @@ jobs:
 
       - name: Install buf
         uses: bufbuild/buf-setup-action@v1
+        continue-on-error: true
 
       - name: Cache cargo registry + build
         uses: actions/cache@v4
