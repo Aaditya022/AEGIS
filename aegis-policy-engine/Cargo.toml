@@ -1,0 +1,33 @@
+[package]
+name = "aegis-policy-engine"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+name = "aegis_policy_engine"
+
+[dependencies]
+aegis-common = { path = "../aegis-common" }
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+serde_yaml = "0.9"
+tracing.workspace = true
+anyhow.workspace = true
+thiserror.workspace = true
+regex = "1"
+lazy_static.workspace = true
+chrono.workspace = true
+sha2.workspace = true
+hex.workspace = true
+wasmtime = "24"
+wasmtime-wasi = "24"
+which = "6"
+tempfile = "3"
+
+[dev-dependencies]
+criterion.workspace = true
+
+[[bench]]
+name = "policy_bench"
+harness = false

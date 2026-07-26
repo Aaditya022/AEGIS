@@ -1,0 +1,31 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: aegis-sidecar-injector
+  labels:
+    app.kubernetes.io/name: aegis
+    app.kubernetes.io/component: sidecar-injector
+webhooks:
+  - name: sidecar-injector.aegis.ai
+    clientConfig:
+      service:
+        name: aegis-control-plane
+        namespace: aegis-system
+        path: /v1/inject
+      caBundle: ""
+    rules:
+      - operations: ["CREATE"]
+        apiGroups: [""]
+        apiVersions: ["v1"]
+        resources: ["pods"]
+    failurePolicy: Ignore
+    sideEffects: None
+    admissionReviewVersions: ["v1"]
+    namespaceSelector:
+      matchLabels:
+        aegis.ai/inject: "enabled"
+    objectSelector:
+      matchExpressions:
+        - key: aegis.ai/inject
+          operator: NotIn
+          values: ["false"]

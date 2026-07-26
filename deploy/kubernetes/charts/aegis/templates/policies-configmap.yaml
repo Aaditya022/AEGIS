@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aegis-policies
+  labels:
+    {{- include "aegis.labels" . | nindent 4 }}
+data:
+  identity.rego: |
+    package aegis.identity
+    default allow = false
+    allow { input.agent_id != "" }
+
+  environment.rego: |
+    package aegis.environment
+    default allow = true
+    deny[reason] {
+      input.environment == "staging"
+      contains(input.resource, "production")
+      reason := "staging credentials cannot access production resources"
+    }
+
+  recursion.rego: |
+    package aegis.recursion
+    default allow = true
+    deny[reason] {
+      input.recursion_depth > input.max_recursion_depth
+      reason := sprintf("recursion limit exceeded: depth %d, max %d", [input.recursion_depth, input.max_recursion_depth])
+    }
+
+  budget.rego: |
+    package aegis.budget
+    default allow = true
+    deny[reason] {
+      input.budget_consumed > input.budget_limit
+      reason := sprintf("budget limit exceeded: $%.2f, limit $%.2f", [input.budget_consumed, input.budget_limit])
+    }

@@ -1,0 +1,119 @@
+syntax = "proto3";
+package aegis.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// ── Agent Identity ─────────────────────────────────────────────────────
+
+message AgentIdentity {
+  string id = 1;                         // SPIFFE-compatible identifier
+  AgentType type = 2;
+  repeated string authorized_resources = 3;
+  string issuer = 4;
+  google.protobuf.Timestamp expiry = 5;
+  string public_key_pem = 6;
+}
+
+enum AgentType {
+  AGENT_TYPE_UNSPECIFIED = 0;
+  AGENT_TYPE_HUMAN_INITIATED = 1;
+  AGENT_TYPE_AGENT_INITIATED = 2;
+  AGENT_TYPE_FULLY_AUTONOMOUS = 3;
+}
+
+// ── Policy Evaluation ───────────────────────────────────────────────────
+
+message PolicyRequest {
+  string agent_id = 1;
+  string operation = 2;                  // e.g., "tool.call", "llm.invoke", "file.read"
+  map<string, string> context = 3;       // execution context (env, budget, recursion depth)
+  string resource = 4;                   // target resource (URL, tool name, file path)
+  bytes payload_hash = 5;                // SHA-256 of the operation payload
+  string trace_id = 6;
+}
+
+message PolicyDecision {
+  Decision decision = 1;
+  string reason = 2;
+  repeated string violated_policies = 3;
+  map<string, string> enforcement_metadata = 4;
+  int64 evaluation_time_ns = 5;
+}
+
+enum Decision {
+  DECISION_UNSPECIFIED = 0;
+  DECISION_ALLOW = 1;
+  DECISION_DENY = 2;
+  DECISION_ESCALATE = 3;
+}
+
+// ── Audit Event ─────────────────────────────────────────────────────────
+
+message AuditEvent {
+  string event_id = 1;
+  string trace_id = 2;
+  string agent_id = 3;
+  string operation = 4;
+  string resource = 5;
+  Decision decision = 6;
+  google.protobuf.Timestamp timestamp = 7;
+  bytes signature = 8;                   // Ed25519 signature for tamper evidence
+  int64 sequence_number = 9;
+  string sidecar_id = 10;
+  map<string, string> metadata = 11;
+}
+
+message AuditBatch {
+  repeated AuditEvent events = 1;
+  string sidecar_id = 2;
+}
+
+// ── Sidecar Control ─────────────────────────────────────────────────────
+
+message SidecarConfig {
+  string sidecar_id = 1;
+  string agent_id = 2;
+  repeated string policy_bundles = 3;
+  int32 max_recursion_depth = 4;
+  double budget_limit_usd = 5;
+  repeated string allowed_domains = 6;
+  repeated string allowed_tools = 7;
+  GatewayConfig gateway = 8;
+  AuditConfig audit = 9;
+  ObservabilityConfig observability = 10;
+}
+
+message GatewayConfig {
+  string address = 1;
+  int32 port = 2;
+  bool tls_enabled = 3;
+}
+
+message AuditConfig {
+  string kafka_brokers = 1;
+  string topic = 2;
+  bool enable_immutability = 3;
+}
+
+message ObservabilityConfig {
+  string otlp_endpoint = 1;
+  bool enable_tracing = 2;
+  bool enable_metrics = 3;
+}
+
+// ── gRPC Services ──────────────────────────────────────────────────────
+
+service SidecarService {
+  rpc GetConfig(GetConfigRequest) returns (SidecarConfig);
+  rpc ReportDecision(PolicyRequest) returns (PolicyDecision);
+  rpc StreamAudit(AuditBatch) returns (StreamAuditResponse);
+}
+
+message GetConfigRequest {
+  string agent_id = 1;
+}
+
+message StreamAuditResponse {
+  bool acknowledged = 1;
+  int64 last_sequence = 2;
+}

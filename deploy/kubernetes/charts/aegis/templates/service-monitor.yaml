@@ -1,0 +1,49 @@
+{{- if .Values.observability.metrics.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "aegis.fullname" . }}-sidecar
+  labels:
+    {{- include "aegis.labels" . | nindent 4 }}
+    release: {{ .Values.observability.metrics.serviceMonitor.release }}
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: sidecar
+  endpoints:
+    - port: metrics
+      interval: 15s
+      path: /metrics
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "aegis.fullname" . }}-gateway
+  labels:
+    {{- include "aegis.labels" . | nindent 4 }}
+    release: {{ .Values.observability.metrics.serviceMonitor.release }}
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: gateway
+  endpoints:
+    - port: http
+      interval: 15s
+      path: /metrics
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "aegis.fullname" . }}-control-plane
+  labels:
+    {{- include "aegis.labels" . | nindent 4 }}
+    release: {{ .Values.observability.metrics.serviceMonitor.release }}
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: control-plane
+  endpoints:
+    - port: http
+      interval: 15s
+      path: /metrics
+{{- end }}

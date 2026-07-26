@@ -1,0 +1,170 @@
+syntax = "proto3";
+package aegis.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// ── Agent Registry ──────────────────────────────────────────────────────
+
+message AgentRecord {
+  string agent_id = 1;
+  string framework = 2;                  // langgraph, crewai, autogen, etc.
+  AgentIdentity identity = 3;
+  repeated string policy_ids = 4;
+  string deployment_env = 5;             // staging, production
+  AgentStatus status = 6;
+  google.protobuf.Timestamp registered_at = 7;
+  google.protobuf.Timestamp last_seen = 8;
+  map<string, string> labels = 9;
+}
+
+enum AgentStatus {
+  AGENT_STATUS_UNSPECIFIED = 0;
+  AGENT_STATUS_ACTIVE = 1;
+  AGENT_STATUS_PAUSED = 2;
+  AGENT_STATUS_TERMINATED = 3;
+  AGENT_STATUS_COMPROMISED = 4;
+}
+
+// ── Agent Identity (reused from sidecar.proto style) ────────────────────
+
+message AgentIdentity {
+  string id = 1;
+  AgentType type = 2;
+  repeated string authorized_resources = 3;
+  string issuer = 4;
+  google.protobuf.Timestamp expiry = 5;
+  string public_key_pem = 6;
+}
+
+enum AgentType {
+  AGENT_TYPE_UNSPECIFIED = 0;
+  AGENT_TYPE_HUMAN_INITIATED = 1;
+  AGENT_TYPE_AGENT_INITIATED = 2;
+  AGENT_TYPE_FULLY_AUTONOMOUS = 3;
+}
+
+// ── Policy Management ───────────────────────────────────────────────────
+
+message PolicyBundle {
+  string id = 1;
+  string name = 2;
+  string rego_source = 3;
+  string version = 4;
+  repeated string targets = 5;           // agent labels this policy applies to
+  PolicySeverity severity = 6;
+  bool enabled = 7;
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp updated_at = 9;
+}
+
+enum PolicySeverity {
+  POLICY_SEVERITY_UNSPECIFIED = 0;
+  POLICY_SEVERITY_LOG = 1;
+  POLICY_SEVERITY_WARN = 2;
+  POLICY_SEVERITY_BLOCK = 3;
+  POLICY_SEVERITY_CRITICAL = 4;
+}
+
+// ── Control Plane Service ───────────────────────────────────────────────
+
+service ControlPlaneService {
+  rpc RegisterAgent(AgentRecord) returns (RegisterResponse);
+  rpc GetAgent(GetAgentRequest) returns (AgentRecord);
+  rpc ListAgents(ListAgentsRequest) returns (ListAgentsResponse);
+  rpc UpdateAgentStatus(UpdateStatusRequest) returns (UpdateStatusResponse);
+  rpc PushPolicy(PolicyBundle) returns (PushPolicyResponse);
+  rpc GetPolicy(GetPolicyRequest) returns (PolicyBundle);
+  rpc ListPolicies(ListPoliciesRequest) returns (ListPoliciesResponse);
+  rpc GetComplianceReport(ComplianceReportRequest) returns (ComplianceReport);
+}
+
+message RegisterResponse {
+  bool success = 1;
+  string agent_id = 2;
+}
+
+message GetAgentRequest {
+  string agent_id = 1;
+}
+
+message ListAgentsRequest {
+  int32 page_size = 1;
+  string page_token = 2;
+  string framework_filter = 3;
+  AgentStatus status_filter = 4;
+}
+
+message ListAgentsResponse {
+  repeated AgentRecord agents = 1;
+  string next_page_token = 2;
+  int32 total_count = 3;
+}
+
+message UpdateStatusRequest {
+  string agent_id = 1;
+  AgentStatus status = 2;
+  string reason = 3;
+}
+
+message UpdateStatusResponse {
+  bool success = 1;
+}
+
+message PushPolicyResponse {
+  bool success = 1;
+  string policy_id = 2;
+  string compiled_hash = 3;
+}
+
+message GetPolicyRequest {
+  string policy_id = 1;
+  string version = 2;
+}
+
+message ListPoliciesRequest {
+  int32 page_size = 1;
+  string page_token = 2;
+  bool enabled_only = 3;
+}
+
+message ListPoliciesResponse {
+  repeated PolicyBundle policies = 1;
+  string next_page_token = 2;
+}
+
+// ── Compliance ──────────────────────────────────────────────────────────
+
+message ComplianceReportRequest {
+  string agent_id = 1;
+  repeated string frameworks = 2;        // "eu_ai_act", "nist", "imda"
+}
+
+message ComplianceReport {
+  string agent_id = 1;
+  repeated FrameworkCompliance frameworks = 2;
+  ComplianceSummary summary = 3;
+}
+
+message FrameworkCompliance {
+  string name = 1;
+  string version = 2;
+  repeated ArticleCompliance articles = 3;
+  double overall_score = 4;
+  string status = 5;                     // compliant, non_compliant, partially_compliant
+}
+
+message ArticleCompliance {
+  string article_id = 1;
+  string description = 2;
+  bool satisfied = 3;
+  repeated string evidence = 4;
+  string risk_level = 5;
+}
+
+message ComplianceSummary {
+  int32 total_requirements = 1;
+  int32 satisfied = 2;
+  int32 partially_satisfied = 3;
+  int32 not_satisfied = 4;
+  double overall_score = 5;
+}

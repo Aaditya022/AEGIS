@@ -1,0 +1,79 @@
+codecov:
+  require_ci_to_pass: true
+  notify:
+    after_n_builds: 2
+    wait_for_ci: true
+
+coverage:
+  precision: 2
+  round: down
+  range: "70..100"
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 5%
+        flags:
+          - rust
+          - go
+    patch:
+      default:
+        target: 80%
+        threshold: 10%
+
+flags:
+  rust:
+    paths:
+      - aegis-*/
+      - deploy/kubernetes/operator/
+    carryforward: true
+  go:
+    paths:
+      - aegis-gateway/
+      - aegis-control-plane/
+    carryforward: true
+
+comment:
+  layout: "header, diff, flags, components"
+  behavior: default
+  require_changes: false
+  hide_project_coverage: false
+
+component_management:
+  individual_components:
+    - component_id: sidecar
+      name: Sidecar
+      paths:
+        - aegis-sidecar/**
+    - component_id: policy-engine
+      name: Policy Engine
+      paths:
+        - aegis-policy-engine/**
+    - component_id: audit-log
+      name: Audit Log
+      paths:
+        - aegis-audit-log/**
+    - component_id: cli
+      name: CLI
+      paths:
+        - aegis-cli/**
+    - component_id: ebpf
+      name: eBPF
+      paths:
+        - aegis-ebpf/**
+    - component_id: gateway
+      name: Gateway
+      paths:
+        - aegis-gateway/**
+    - component_id: control-plane
+      name: Control Plane
+      paths:
+        - aegis-control-plane/**
+    - component_id: operator
+      name: K8s Operator
+      paths:
+        - deploy/kubernetes/operator/**
+    - component_id: tests
+      name: Tests
+      paths:
+        - tests/**

@@ -1,0 +1,83 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aegis-sidecar-injector
+  labels:
+    {{- include "aegis.labels" . | nindent 4 }}
+data:
+  sidecar-config.yaml: |
+    sidecar_id: "${POD_NAME}"
+    agent_id: "${AEGIS_AGENT_ID}"
+    listen_addr: "0.0.0.0:9000"
+    gateway_addr: "http://{{ include "aegis.fullname" . }}-gateway:8000"
+    control_plane_addr: "http://{{ include "aegis.fullname" . }}-control-plane:8500"
+    kafka_brokers: "{{ .Values.controlPlane.kafka.brokers }}"
+    policy_dir: "/etc/aegis/policies"
+    max_recursion_depth: {{ .Values.sidecar.config.maxRecursionDepth }}
+    budget_limit_usd: {{ .Values.sidecar.config.budgetLimitUsd }}
+    otlp_endpoint: "{{ .Values.observability.tracing.endpoint }}"
+    enable_ebpf: {{ .Values.ebpf.enabled }}
+    log_level: "{{ .Values.sidecar.config.logLevel }}"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aegis-injection-patch
+  labels:
+    {{- include "aegis.labels" . | nindent 4 }}
+data:
+  patch.yaml: |
+    spec:
+      template:
+        spec:
+          initContainers:
+            - name: aegis-init-iptables
+              image: {{ .Values.sidecar.image.repository }}:{{ .Values.sidecar.image.tag }}
+              command:
+                - "sh"
+                - "-c"
+                - "iptables -t nat -A OUTPUT -p tcp --dport 443 -j REDIRECT --to-port 9000
+                   iptables -t nat -A OUTPUT -p tcp --dport 80 -j REDIRECT --to-port 9000"
+              securityContext:
+                capabilities:
+                  add: ["NET_ADMIN"]
+              imagePullPolicy: {{ .Values.sidecar.image.pullPolicy }}
+          containers:
+            - name: aegis-sidecar
+              image: {{ .Values.sidecar.image.repository }}:{{ .Values.sidecar.image.tag }}
+              args:
+                - "--config"
+                - "/etc/aegis/sidecar.yaml"
+              env:
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+                - name: AEGIS_AGENT_ID
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.labels['aegis.ai/agent-id']
+                - name: AEGIS_ENV
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.namespace
+              ports:
+                - containerPort: {{ .Values.sidecar.service.port }}
+                  name: proxy
+                - containerPort: {{ .Values.sidecar.service.grpcPort }}
+                  name: grpc
+              volumeMounts:
+                - name: aegis-config
+                  mountPath: /etc/aegis
+                - name: aegis-policies
+                  mountPath: /etc/aegis/policies
+              resources:
+                {{- toYaml .Values.sidecar.resources | nindent 16 }}
+          volumes:
+            - name: aegis-config
+              configMap:
+                name: aegis-sidecar-injector
+            - name: aegis-policies
+              configMap:
+                name: aegis-policies

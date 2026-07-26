@@ -1,0 +1,34 @@
+# Rust
+target/
+Cargo.lock
+
+# Go
+aegis-gateway/bin/
+aegis-control-plane/bin/
+vendor/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+*.o
+*.so
+*.wasm
+*.tar.gz
+
+# Environment
+.env
+.env.local
+*.pem
+*.key
+
+# eBPF
+*.btf
+*.o

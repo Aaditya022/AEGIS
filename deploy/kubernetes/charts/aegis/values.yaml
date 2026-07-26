@@ -1,0 +1,250 @@
+# AEGIS Helm Chart Values
+# Reference: https://github.com/aegis-ai/aegis
+
+global:
+  imageRegistry: ghcr.io/aegis-ai
+  imageTag: latest
+  imagePullPolicy: IfNotPresent
+
+# ── Namespace Configuration ─────────────────────────────────────────────
+
+namespace: aegis-system
+serviceAccountName: aegis-controller
+
+# ── Priority Classes ────────────────────────────────────────────────────
+
+priorityClass:
+  create: true
+
+# ── Network Policy ──────────────────────────────────────────────────────
+
+networkPolicy:
+  enabled: true
+
+# ── Sidecar Configuration ───────────────────────────────────────────────
+
+sidecar:
+  enabled: true
+  image:
+    repository: ghcr.io/aegis-ai/sidecar
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "64Mi"
+    limits:
+      cpu: "500m"
+      memory: "256Mi"
+  config:
+    logLevel: info
+    maxRecursionDepth: 5
+    budgetLimitUsd: 100.0
+    enableEbpf: false
+  service:
+    port: 9000
+    grpcPort: 9001
+    metricsPort: 9090
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  podAnnotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9090"
+
+# ── Gateway Configuration ───────────────────────────────────────────────
+
+gateway:
+  enabled: true
+  image:
+    repository: ghcr.io/aegis-ai/gateway
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicaCount: 3
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "256Mi"
+    limits:
+      cpu: "1000m"
+      memory: "512Mi"
+  service:
+    port: 8000
+    grpcPort: 8001
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  pdb:
+    enabled: true
+    minAvailable: 2
+  nodeSelector: {}
+  tolerations: []
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: app.kubernetes.io/component
+                  operator: In
+                  values:
+                    - gateway
+            topologyKey: kubernetes.io/hostname
+  providers:
+    - name: openai
+      models:
+        - gpt-4
+        - gpt-4o
+        - gpt-4o-mini
+    - name: anthropic
+      models:
+        - claude-3
+        - claude-4
+    - name: google
+      models:
+        - gemini-1.5
+        - gemini-2.0
+    - name: mistral
+      models:
+        - mistral-large
+        - mistral-medium
+    - name: ollama
+      models:
+        - llama3
+        - mistral
+    - name: openrouter
+      models:
+        - "*"
+
+# ── Control Plane Configuration ─────────────────────────────────────────
+
+controlPlane:
+  enabled: true
+  image:
+    repository: ghcr.io/aegis-ai/control-plane
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicaCount: 3
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "512Mi"
+    limits:
+      cpu: "2000m"
+      memory: "2Gi"
+  service:
+    port: 8500
+    grpcPort: 8501
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 6
+    targetCPUUtilizationPercentage: 60
+  pdb:
+    enabled: true
+    minAvailable: 2
+  etcd:
+    endpoints:
+      - etcd:2379
+  postgres:
+    dsn: "postgres://aegis:aegis-dev@postgres:5432/aegis?sslmode=disable"
+  kafka:
+    brokers: "redpanda:9092"
+  redis:
+    addr: "redis:6379"
+  nodeSelector: {}
+  tolerations: []
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/component
+                operator: In
+                values:
+                  - control-plane
+          topologyKey: kubernetes.io/hostname
+
+# ── Audit Log Configuration ──────────────────────────────────────────────
+
+auditLog:
+  enabled: true
+  image:
+    repository: ghcr.io/aegis-ai/audit-log
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicaCount: 3
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "256Mi"
+    limits:
+      cpu: "1000m"
+      memory: "1Gi"
+  service:
+    port: 9100
+  persistence:
+    enabled: true
+    size: 50Gi
+    storageClass: ""
+
+# ── eBPF Configuration ──────────────────────────────────────────────────
+
+ebpf:
+  enabled: false
+  privileged: true
+  kernelVersion: ">=5.8"
+
+# ── Observability ───────────────────────────────────────────────────────
+
+observability:
+  tracing:
+    enabled: true
+    endpoint: "jaeger:4317"
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      release: prometheus
+  grafana:
+    dashboards:
+      enabled: true
+
+# ── Ingress ──────────────────────────────────────────────────────────────
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts: []
+  tls: []
+
+# ── TLS Configuration ──────────────────────────────────────────────────
+
+tls:
+  enabled: false
+  certManager:
+    enabled: false
+    issuer:
+      name: aegis-issuer
+      kind: ClusterIssuer
+
+# ── Secret Management ──────────────────────────────────────────────────
+
+secrets:
+  externalSecrets:
+    enabled: false
+    store:
+      name: aws-secrets
+      kind: ClusterSecretStore
+  aegis:
+    openaiApiKey: ""
+    anthropicApiKey: ""
+    googleApiKey: ""
+    mistralApiKey: ""
+    openrouterApiKey: ""

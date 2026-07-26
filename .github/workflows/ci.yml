@@ -1,0 +1,372 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  merge_group:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  RUST_BACKTRACE: short
+  RUSTFLAGS: -D warnings
+  GOFLAGS: -mod=mod
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "~1.21"
+          check-latest: true
+
+      - name: Install clang + llvm (eBPF)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq clang llvm libelf-dev
+
+      - name: Install protobuf compiler
+        run: |
+          sudo apt-get install -y -qq protobuf-compiler
+          protoc --version
+
+      - name: Install buf
+        uses: bufbuild/buf-setup-action@v1
+
+      - name: Cache cargo registry + build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Generate protobuf
+        run: make proto
+
+      - name: Check protobuf buf lint
+        run: |
+          if command -v buf &> /dev/null; then
+            buf lint proto/
+          else
+            echo "buf not available, skipping lint"
+          fi
+
+      - name: cargo fmt --check
+        run: cargo fmt --all --check
+
+      - name: cargo clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+  build-and-test:
+    name: Build + Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "~1.21"
+          check-latest: true
+
+      - name: Install clang + llvm (eBPF)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq clang llvm libelf-dev
+
+      - name: Install protobuf compiler
+        run: |
+          sudo apt-get install -y -qq protobuf-compiler
+
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-nextest,cargo-llvm-cov
+
+      - name: Install cargo-deny
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-deny
+
+      - name: Install cargo-audit
+        run: cargo install cargo-audit --locked
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Generate protobuf
+        run: make proto
+
+      - name: cargo build --release
+        run: cargo build --workspace --release
+
+      - name: cargo-deny (license + advisory check)
+        run: cargo-deny check licenses advisories --workspace
+
+      - name: cargo-audit (advisory check)
+        run: cargo audit --ignore RUSTSEC-2023-0071 --ignore RUSTSEC-2024-0001
+        continue-on-error: true
+
+      - name: cargo nextest run
+        run: |
+          cargo nextest run --workspace --release \
+            --failure-output final \
+            --message-format libtest-json \
+            | tee nextest-results.json
+
+      - name: Generate coverage (Rust)
+        run: |
+          cargo llvm-cov --workspace --lcov --output-path lcov.info --release
+
+      - name: Go build
+        run: |
+          cd aegis-gateway && go build ./...
+          cd ../aegis-control-plane && go build ./...
+
+      - name: Go test
+        run: |
+          cd aegis-gateway && go test -race -coverprofile=../gateway-coverage.out -covermode=atomic ./...
+          cd ../aegis-control-plane && go test -race -coverprofile=../control-plane-coverage.out -covermode=atomic ./...
+
+      - name: Run benchmarks
+        run: cargo bench --workspace -- --output-format bencher | tee benchmark-output.txt
+
+      - name: Upload benchmark artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmarks
+          path: |
+            benchmark-output.txt
+            target/criterion/
+          retention-days: 30
+
+      - name: Upload nextest results
+        uses: actions/upload-artifact@v4
+        with:
+          name: nextest-results
+          path: nextest-results.json
+          retention-days: 30
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: |
+            lcov.info
+            gateway-coverage.out
+            control-plane-coverage.out
+          retention-days: 30
+
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: lcov.info,gateway-coverage.out,control-plane-coverage.out
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
+
+  docker:
+    name: Docker
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: build-and-test
+    if: github.event_name == 'push' && github.ref_name == 'main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to ghcr.io
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/aegis
+
+      - name: Build and push sidecar
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/docker/sidecar.Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/aegis-sidecar:latest
+            ghcr.io/${{ github.repository_owner }}/aegis-sidecar:${{ github.sha }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push gateway
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/docker/gateway.Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/aegis-gateway:latest
+            ghcr.io/${{ github.repository_owner }}/aegis-gateway:${{ github.sha }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push control-plane
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/docker/control-plane.Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/aegis-control-plane:latest
+            ghcr.io/${{ github.repository_owner }}/aegis-control-plane:${{ github.sha }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  kubernetes:
+    name: Kubernetes
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: build-and-test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: latest
+
+      - name: Install kubeconform
+        uses: supplypike/setup-bin@v4
+        with:
+          uri: https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz
+          name: kubeconform
+          version: v0.6.7
+
+      - name: Validate Kubernetes manifests
+        run: |
+          echo "=== Validating raw manifests ==="
+          for f in deploy/kubernetes/*.yaml; do
+            [ -f "$f" ] || continue
+            echo "  - $f"
+            kubeconform -strict -skip "*.charts.aegis.*" "$f" || true
+          done
+          echo "=== Validating Helm chart ==="
+          helm template deploy/kubernetes/charts/aegis/ > /dev/null
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+
+      - name: Helm lint
+        run: helm lint deploy/kubernetes/charts/aegis/
+
+  security:
+    name: Security
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-security-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Install cargo-deny
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-deny
+
+      - name: Install cargo-audit
+        run: cargo install cargo-audit --locked
+
+      - name: cargo-deny (license + advisory)
+        run: cargo-deny check licenses advisories --workspace
+        continue-on-error: true
+
+      - name: cargo-audit
+        run: cargo audit --ignore RUSTSEC-2023-0071 --ignore RUSTSEC-2024-0001
+        continue-on-error: true
+
+      - name: Trivy scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: sarif
+          output: trivy-results.sarif
+          severity: HIGH,CRITICAL
+          exit-code: 0
+
+      - name: Upload Trivy to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-results.sarif
+          category: trivy

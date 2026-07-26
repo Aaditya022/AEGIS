@@ -1,0 +1,19 @@
+apiVersion: v2
+name: aegis
+description: AEGIS - Universal Governance Primitive for Autonomous AI Systems
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+kubeVersion: ">=1.27.0-0"
+home: https://github.com/aegis-ai/aegis
+sources:
+  - https://github.com/aegis-ai/aegis
+keywords:
+  - ai
+  - governance
+  - agents
+  - policy
+  - sidecar
+maintainers:
+  - name: AEGIS Team
+    email: team@aegis.ai

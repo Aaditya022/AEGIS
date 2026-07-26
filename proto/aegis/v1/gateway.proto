@@ -1,0 +1,74 @@
+syntax = "proto3";
+package aegis.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// ── LLM Routing ─────────────────────────────────────────────────────────
+
+message RouteRequest {
+  string agent_id = 1;
+  string model = 2;                      // desired model name
+  map<string, string> requirements = 3;  // latency, cost, capability constraints
+  bytes payload = 4;
+  string trace_id = 5;
+}
+
+message RouteResponse {
+  string provider = 1;
+  string endpoint = 2;
+  map<string, string> auth_headers = 3;
+  int64 estimated_latency_ms = 4;
+  double estimated_cost_usd = 5;
+}
+
+// ── Rate Limiting ───────────────────────────────────────────────────────
+
+message RateLimitRequest {
+  string agent_id = 1;
+  string resource = 2;
+  int64 tokens_requested = 3;
+}
+
+message RateLimitResponse {
+  bool allowed = 1;
+  int64 remaining_tokens = 2;
+  int64 reset_at_unix_ms = 3;
+  int64 retry_after_ms = 4;
+}
+
+// ── Gateway Service ─────────────────────────────────────────────────────
+
+service GatewayService {
+  rpc RouteModel(RouteRequest) returns (RouteResponse);
+  rpc CheckRateLimit(RateLimitRequest) returns (RateLimitResponse);
+  rpc ReportMetrics(MetricsReport) returns (MetricsResponse);
+}
+
+message MetricsReport {
+  string gateway_id = 1;
+  repeated RouteMetric routes = 2;
+  repeated ErrorMetric errors = 3;
+  int64 requests_served = 4;
+  int64 avg_latency_ms = 5;
+}
+
+message RouteMetric {
+  string provider = 1;
+  string model = 2;
+  int64 request_count = 3;
+  int64 latency_p50_ms = 4;
+  int64 latency_p95_ms = 5;
+  int64 latency_p99_ms = 6;
+  int64 error_count = 7;
+  double cost_usd = 8;
+}
+
+message ErrorMetric {
+  string code = 1;
+  string message = 2;
+  int64 count = 3;
+}
+
+message MetricsResponse {
+  bool acknowledged = 1;
+}

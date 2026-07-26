@@ -1,0 +1,35 @@
+# Default owners for everything
+* @aaditya-aegis
+
+# Rust workspace
+aegis-common/    @aaditya-aegis
+aegis-sidecar/   @aaditya-aegis
+aegis-policy-engine/ @aaditya-aegis
+aegis-ebpf/      @aaditya-aegis
+aegis-audit-log/ @aaditya-aegis
+aegis-cli/       @aaditya-aegis
+
+# Go modules
+aegis-gateway/        @aaditya-aegis
+aegis-control-plane/  @aaditya-aegis
+
+# Infrastructure
+deploy/          @aaditya-aegis
+docker/          @aaditya-aegis
+
+# CI/CD
+.github/         @aaditya-aegis
+
+# Documentation
+docs/            @aaditya-aegis
+paper/           @aaditya-aegis
+
+# Tests
+tests/           @aaditya-aegis
+
+# Protobuf
+proto/           @aaditya-aegis
+
+# Root config
+Makefile         @aaditya-aegis
+Cargo.toml       @aaditya-aegis

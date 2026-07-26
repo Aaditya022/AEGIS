@@ -1,0 +1,30 @@
+{{- if .Values.gateway.pdb.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "aegis.fullname" . }}-gateway
+  labels:
+    {{- include "aegis.labels" . | nindent 4 }}
+    app.kubernetes.io/component: gateway
+spec:
+  minAvailable: {{ .Values.gateway.pdb.minAvailable }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: gateway
+{{- end }}
+
+{{- if .Values.controlPlane.pdb.enabled }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "aegis.fullname" . }}-control-plane
+  labels:
+    {{- include "aegis.labels" . | nindent 4 }}
+    app.kubernetes.io/component: control-plane
+spec:
+  minAvailable: {{ .Values.controlPlane.pdb.minAvailable }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: control-plane
+{{- end }}

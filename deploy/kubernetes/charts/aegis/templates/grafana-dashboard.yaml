@@ -1,0 +1,41 @@
+{{- if .Values.observability.grafana.dashboards.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "aegis.fullname" . }}-grafana-dashboard
+  labels:
+    {{- include "aegis.labels" . | nindent 4 }}
+    grafana_dashboard: "1"
+data:
+  aegis-overview.json: |
+    {
+      "title": "AEGIS Overview",
+      "uid": "aegis-overview",
+      "version": 1,
+      "panels": [
+        {
+          "title": "Requests per Second",
+          "type": "graph",
+          "targets": [
+            { "expr": "rate(aegis_requests_total[1m])", "legendFormat": "Total" },
+            { "expr": "rate(aegis_allowed_total[1m])", "legendFormat": "Allowed" },
+            { "expr": "rate(aegis_denied_total[1m])", "legendFormat": "Denied" }
+          ]
+        },
+        {
+          "title": "Policy Decisions by Category",
+          "type": "piechart",
+          "targets": [
+            { "expr": "aegis_denied_by_category", "format": "table", "instant": true }
+          ]
+        },
+        {
+          "title": "Latency (P50 / P95 / P99)",
+          "type": "graph",
+          "targets": [
+            { "expr": "aegis_request_duration_avg / 1000000", "legendFormat": "Avg (ms)" }
+          ]
+        }
+      ]
+    }
+{{- end }}
