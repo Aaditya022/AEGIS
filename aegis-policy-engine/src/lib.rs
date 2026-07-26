@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::sync::Mutex;
 
 use chrono::{Datelike, Timelike};
 
@@ -42,7 +43,7 @@ pub struct Policy {
 pub struct PolicyEngine {
     policies: Vec<Policy>,
     builtins: BuiltinRegistry,
-    metrics: EngineMetrics,
+    metrics: Mutex<EngineMetrics>,
 }
 
 #[derive(Default)]

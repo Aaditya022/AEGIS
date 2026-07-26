@@ -4,7 +4,7 @@ use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criteri
 use std::time::Duration;
 
 fn bench_policy_evaluation(c: &mut Criterion) {
-    let mut engine = PolicyEngine::default();
+    let engine = PolicyEngine::default();
 
     let ctx = PolicyContext {
         agent_id: "bench-agent".into(),
@@ -23,7 +23,7 @@ fn bench_policy_evaluation(c: &mut Criterion) {
 
     group.bench_with_input(
         BenchmarkId::new("allow", "standard"),
-        &(&mut engine, &ctx),
+        &(&engine, &ctx),
         |b, (eng, c)| b.iter(|| eng.evaluate(black_box(c))),
     );
 
@@ -35,7 +35,7 @@ fn bench_policy_evaluation(c: &mut Criterion) {
 
     group.bench_with_input(
         BenchmarkId::new("deny", "recursion"),
-        &(&mut engine, &deny_ctx),
+        &(&engine, &deny_ctx),
         |b, (eng, c)| b.iter(|| eng.evaluate(black_box(c))),
     );
 

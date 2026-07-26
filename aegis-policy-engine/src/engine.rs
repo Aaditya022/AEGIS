@@ -65,7 +65,7 @@ impl PolicyEngine {
         &self.policies
     }
 
-    pub fn evaluate(&mut self, ctx: &PolicyContext) -> anyhow::Result<PolicyResult> {
+    pub fn evaluate(&self, ctx: &PolicyContext) -> anyhow::Result<PolicyResult> {
         let start = Instant::now();
 
         // Builtin: reasoning risk score
@@ -150,11 +150,14 @@ impl PolicyEngine {
                 };
 
                 let elapsed = start.elapsed().as_nanos() as i64;
-                self.metrics.evaluations += 1;
-                self.metrics.avg_eval_time_ns = (self.metrics.avg_eval_time_ns
-                    * (self.metrics.evaluations - 1) as f64
-                    + elapsed as f64)
-                    / self.metrics.evaluations as f64;
+                {
+                    let mut metrics = self.metrics.lock().unwrap();
+                    metrics.evaluations += 1;
+                    metrics.avg_eval_time_ns = (metrics.avg_eval_time_ns
+                        * (metrics.evaluations - 1) as f64
+                        + elapsed as f64)
+                        / metrics.evaluations as f64;
+                }
 
                 debug!(
                     policy = %policy.name,
@@ -177,7 +180,7 @@ impl PolicyEngine {
         }
 
         let elapsed = start.elapsed().as_nanos() as i64;
-        self.metrics.evaluations += 1;
+        self.metrics.lock().unwrap().evaluations += 1;
 
         Ok(PolicyResult {
             decision: Decision::Allow,
@@ -187,8 +190,8 @@ impl PolicyEngine {
         })
     }
 
-    pub fn get_metrics(&self) -> &EngineMetrics {
-        &self.metrics
+    pub fn get_metrics(&self) -> EngineMetrics {
+        self.metrics.lock().unwrap().clone()
     }
 }
 

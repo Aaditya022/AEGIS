@@ -46,7 +46,7 @@ impl PolicyEvaluator {
     }
 
     pub async fn evaluate(&self, ctx: &PolicyContext) -> anyhow::Result<PolicyResult> {
-        let engine = self.engine.write().await;
+        let engine = self.engine.read().await;
         let start = std::time::Instant::now();
 
         let result = match engine.evaluate(ctx) {

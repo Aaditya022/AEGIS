@@ -29,7 +29,7 @@ impl PolicyTestSuite {
         self.tests.extend(tests);
     }
 
-    pub fn run_all(&mut self) -> Vec<TestResult> {
+    pub fn run_all(&self) -> Vec<TestResult> {
         self.tests
             .iter()
             .map(|test| {
