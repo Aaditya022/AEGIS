@@ -13,10 +13,7 @@ fn main() {
         "credential_monitor.bpf.c",
     ];
 
-    let clang_available = Command::new("clang")
-        .arg("--version")
-        .output()
-        .is_ok();
+    let clang_available = Command::new("clang").arg("--version").output().is_ok();
 
     fs::create_dir_all(&bpf_dir).ok();
 
@@ -30,10 +27,12 @@ fn main() {
             let status = Command::new("clang")
                 .args([
                     "-O2",
-                    "-target", "bpf",
+                    "-target",
+                    "bpf",
                     "-c",
                     &src.to_string_lossy(),
-                    "-o", &out.to_string_lossy(),
+                    "-o",
+                    &out.to_string_lossy(),
                 ])
                 .status()
                 .expect("clang execution failed");
