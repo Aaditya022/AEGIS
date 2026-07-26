@@ -294,7 +294,7 @@ jobs:
           version: latest
 
       - name: Install kubeconform
-        uses: supplypike/setup-bin@v4
+        uses: supplypike/setup-bin@v5
         with:
           uri: https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz
           name: kubeconform
