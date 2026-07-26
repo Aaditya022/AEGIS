@@ -55,10 +55,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-
 
-      - name: Install protoc-gen-prost + protoc-gen-tonic
+      - name: Install protoc plugins
         run: |
           cargo install protoc-gen-prost protoc-gen-tonic --locked
+          go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+          go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
 
       - name: Generate protobuf
         run: make proto
