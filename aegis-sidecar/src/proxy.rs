@@ -13,8 +13,6 @@ use tracing::{debug, error, info, Instrument};
 use crate::middleware::GovernanceOutcome;
 use crate::AppState;
 
-type ProxyResult = Result<hyper::Response<http_body_util::Full<bytes::Bytes>>, hyper::Error>;
-
 type ProxyResult = std::result::Result<Response<Full<Bytes>>, hyper::Error>;
 
 pub struct Proxy;
