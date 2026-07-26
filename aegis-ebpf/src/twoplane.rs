@@ -191,8 +191,7 @@ impl TwoPlaneVerifier {
     }
 
     /// Periodic tick for maintenance
-    pub fn tick(&self) {
-    }
+    pub fn tick(&self) {}
 
     /// Get a summary of the Two-Plane Verification state
     pub async fn summary(&self) -> serde_json::Value {
