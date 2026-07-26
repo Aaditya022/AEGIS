@@ -53,14 +53,10 @@ PROTO_DIR := proto/aegis/v1
 PROTO_OUT_RUST := aegis-common/src
 PROTO_OUT_GO := .
 
-proto: ## Compile protobuf definitions
+proto: ## Compile protobuf definitions (Rust/tonic only; Go does not use gRPC)
 	protoc --proto_path=$(PROTO_DIR) \
 		--prost_out=$(PROTO_OUT_RUST) \
 		--tonic_out=$(PROTO_OUT_RUST) \
-		$(PROTO_DIR)/*.proto
-	protoc --proto_path=$(PROTO_DIR) \
-		--go_out=$(PROTO_OUT_GO) \
-		--go-grpc_out=$(PROTO_OUT_GO) \
 		$(PROTO_DIR)/*.proto
 
 # ── Docker ──────────────────────────────────────────────────────────────

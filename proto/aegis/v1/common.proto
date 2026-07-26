@@ -1,6 +1,8 @@
 syntax = "proto3";
 package aegis.v1;
 
+option go_package = "github.com/aegis-ai/aegis/proto/aegis/v1;common";
+
 import "google/protobuf/timestamp.proto";
 
 message AgentIdentity {
