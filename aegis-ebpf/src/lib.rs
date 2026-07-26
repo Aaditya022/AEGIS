@@ -80,7 +80,9 @@ impl EbpfRuntime {
         for (name, bpf) in &loaded {
             let programs = bpf.programs();
             for (pname, program) in programs {
-                if let Ok(tp) = std::convert::TryInto::<&aya::programs::TracePoint>::try_into(program) {
+                if let Ok(tp) =
+                    std::convert::TryInto::<&aya::programs::TracePoint>::try_into(program)
+                {
                     if let Err(e) = tp.load() {
                         warn!(program = %pname, error = %e, "Failed to load tracepoint");
                     }
