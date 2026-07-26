@@ -242,7 +242,7 @@ jobs:
           images: ghcr.io/${{ github.repository_owner }}/aegis
 
       - name: Build and push sidecar
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: deploy/docker/sidecar.Dockerfile
@@ -255,7 +255,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Build and push gateway
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: deploy/docker/gateway.Dockerfile
@@ -268,7 +268,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Build and push control-plane
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: deploy/docker/control-plane.Dockerfile
