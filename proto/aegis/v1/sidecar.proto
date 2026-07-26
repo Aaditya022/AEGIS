@@ -2,24 +2,7 @@ syntax = "proto3";
 package aegis.v1;
 
 import "google/protobuf/timestamp.proto";
-
-// ── Agent Identity ─────────────────────────────────────────────────────
-
-message AgentIdentity {
-  string id = 1;                         // SPIFFE-compatible identifier
-  AgentType type = 2;
-  repeated string authorized_resources = 3;
-  string issuer = 4;
-  google.protobuf.Timestamp expiry = 5;
-  string public_key_pem = 6;
-}
-
-enum AgentType {
-  AGENT_TYPE_UNSPECIFIED = 0;
-  AGENT_TYPE_HUMAN_INITIATED = 1;
-  AGENT_TYPE_AGENT_INITIATED = 2;
-  AGENT_TYPE_FULLY_AUTONOMOUS = 3;
-}
+import "common.proto";
 
 // ── Policy Evaluation ───────────────────────────────────────────────────
 
@@ -38,13 +21,6 @@ message PolicyDecision {
   repeated string violated_policies = 3;
   map<string, string> enforcement_metadata = 4;
   int64 evaluation_time_ns = 5;
-}
-
-enum Decision {
-  DECISION_UNSPECIFIED = 0;
-  DECISION_ALLOW = 1;
-  DECISION_DENY = 2;
-  DECISION_ESCALATE = 3;
 }
 
 // ── Audit Event ─────────────────────────────────────────────────────────

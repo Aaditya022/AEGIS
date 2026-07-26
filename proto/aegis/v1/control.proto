@@ -2,6 +2,7 @@ syntax = "proto3";
 package aegis.v1;
 
 import "google/protobuf/timestamp.proto";
+import "common.proto";
 
 // ── Agent Registry ──────────────────────────────────────────────────────
 
@@ -23,24 +24,6 @@ enum AgentStatus {
   AGENT_STATUS_PAUSED = 2;
   AGENT_STATUS_TERMINATED = 3;
   AGENT_STATUS_COMPROMISED = 4;
-}
-
-// ── Agent Identity (reused from sidecar.proto style) ────────────────────
-
-message AgentIdentity {
-  string id = 1;
-  AgentType type = 2;
-  repeated string authorized_resources = 3;
-  string issuer = 4;
-  google.protobuf.Timestamp expiry = 5;
-  string public_key_pem = 6;
-}
-
-enum AgentType {
-  AGENT_TYPE_UNSPECIFIED = 0;
-  AGENT_TYPE_HUMAN_INITIATED = 1;
-  AGENT_TYPE_AGENT_INITIATED = 2;
-  AGENT_TYPE_FULLY_AUTONOMOUS = 3;
 }
 
 // ── Policy Management ───────────────────────────────────────────────────

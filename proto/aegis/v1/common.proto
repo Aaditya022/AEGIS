@@ -1,0 +1,27 @@
+syntax = "proto3";
+package aegis.v1;
+
+import "google/protobuf/timestamp.proto";
+
+message AgentIdentity {
+  string id = 1;
+  AgentType type = 2;
+  repeated string authorized_resources = 3;
+  string issuer = 4;
+  google.protobuf.Timestamp expiry = 5;
+  string public_key_pem = 6;
+}
+
+enum AgentType {
+  AGENT_TYPE_UNSPECIFIED = 0;
+  AGENT_TYPE_HUMAN_INITIATED = 1;
+  AGENT_TYPE_AGENT_INITIATED = 2;
+  AGENT_TYPE_FULLY_AUTONOMOUS = 3;
+}
+
+enum Decision {
+  DECISION_UNSPECIFIED = 0;
+  DECISION_ALLOW = 1;
+  DECISION_DENY = 2;
+  DECISION_ESCALATE = 3;
+}
