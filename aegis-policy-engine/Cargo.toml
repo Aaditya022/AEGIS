@@ -21,7 +21,7 @@ chrono.workspace = true
 sha2.workspace = true
 hex.workspace = true
 wasmtime = "24"
-wasmtime-wasi = "24"
+wasmtime-wasi = "47"
 which = "6"
 tempfile = "3"
 
