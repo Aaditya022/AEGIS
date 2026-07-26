@@ -55,6 +55,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-
 
+      - name: Install protoc-gen-prost + protoc-gen-tonic
+        run: |
+          cargo install protoc-gen-prost protoc-gen-tonic --locked
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
       - name: Generate protobuf
         run: make proto
 

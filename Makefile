@@ -55,7 +55,7 @@ PROTO_OUT_GO := .
 
 proto: ## Compile protobuf definitions
 	protoc --proto_path=$(PROTO_DIR) \
-		--rust_out=$(PROTO_OUT_RUST) \
+		--prost_out=$(PROTO_OUT_RUST) \
 		--tonic_out=$(PROTO_OUT_RUST) \
 		$(PROTO_DIR)/*.proto
 	protoc --proto_path=$(PROTO_DIR) \
