@@ -111,7 +111,7 @@ impl EbpfRuntime {
         });
     }
 
-    pub async fn monitor_pid(&self, pid: u32) {
+    pub async fn monitor_pid(&mut self, pid: u32) {
         let mut pids = self.monitored_pids.write().await;
         if !pids.contains(&pid) {
             pids.push(pid);
@@ -119,7 +119,7 @@ impl EbpfRuntime {
         }
 
         if !self.simulated {
-            if let Some(ref bpf) = self.bpf {
+            if let Some(ref mut bpf) = self.bpf {
                 if let Some(map) = bpf.map_mut("aegis_allowed_pids") {
                     if let Ok(mut hmap) = aya::maps::HashMap::<_, u32, u32>::try_from(map) {
                         let _ = hmap.insert(pid, 1, 0);
@@ -129,12 +129,12 @@ impl EbpfRuntime {
         }
     }
 
-    pub async fn stop_monitoring(&self, pid: u32) {
+    pub async fn stop_monitoring(&mut self, pid: u32) {
         let mut pids = self.monitored_pids.write().await;
         pids.retain(|p| *p != pid);
 
         if !self.simulated {
-            if let Some(ref bpf) = self.bpf {
+            if let Some(ref mut bpf) = self.bpf {
                 if let Some(map) = bpf.map_mut("aegis_allowed_pids") {
                     if let Ok(mut hmap) = aya::maps::HashMap::<_, u32, u32>::try_from(map) {
                         let _ = hmap.remove(&pid);

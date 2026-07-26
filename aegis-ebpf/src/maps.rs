@@ -5,7 +5,7 @@ use tracing::debug;
 /// Helper functions for interacting with eBPF maps from userspace
 
 /// Add a PID to the allowed_pids map
-pub fn add_pid_to_monitor(bpf: &Bpf, pid: u32) -> Result<(), anyhow::Error> {
+pub fn add_pid_to_monitor(bpf: &mut Bpf, pid: u32) -> Result<(), anyhow::Error> {
     if let Some(map) = bpf.map_mut("aegis_allowed_pids") {
         if let Ok(mut hmap) = HashMap::<_, u32, u32>::try_from(map) {
             hmap.insert(pid, 1, 0)?;
@@ -16,7 +16,7 @@ pub fn add_pid_to_monitor(bpf: &Bpf, pid: u32) -> Result<(), anyhow::Error> {
 }
 
 /// Remove a PID from the allowed_pids map
-pub fn remove_pid_from_monitor(bpf: &Bpf, pid: u32) -> Result<(), anyhow::Error> {
+pub fn remove_pid_from_monitor(bpf: &mut Bpf, pid: u32) -> Result<(), anyhow::Error> {
     if let Some(map) = bpf.map_mut("aegis_allowed_pids") {
         if let Ok(mut hmap) = HashMap::<_, u32, u32>::try_from(map) {
             hmap.remove(&pid)?;
@@ -27,7 +27,7 @@ pub fn remove_pid_from_monitor(bpf: &Bpf, pid: u32) -> Result<(), anyhow::Error>
 }
 
 /// Add a sensitive path pattern to the eBPF map
-pub fn add_sensitive_path(bpf: &Bpf, pattern: &str) -> Result<(), anyhow::Error> {
+pub fn add_sensitive_path(bpf: &mut Bpf, pattern: &str) -> Result<(), anyhow::Error> {
     let hash = calculate_fnv1a(pattern);
     if let Some(map) = bpf.map_mut("sensitive_paths") {
         if let Ok(mut hmap) = HashMap::<_, u32, u32>::try_from(map) {
@@ -38,7 +38,7 @@ pub fn add_sensitive_path(bpf: &Bpf, pattern: &str) -> Result<(), anyhow::Error>
 }
 
 /// Block an IP address in the eBPF map
-pub fn block_ip(bpf: &Bpf, ip: u32) -> Result<(), anyhow::Error> {
+pub fn block_ip(bpf: &mut Bpf, ip: u32) -> Result<(), anyhow::Error> {
     if let Some(map) = bpf.map_mut("blocked_ips") {
         if let Ok(mut hmap) = HashMap::<_, u32, u32>::try_from(map) {
             hmap.insert(ip, 1, 0)?;
@@ -48,7 +48,7 @@ pub fn block_ip(bpf: &Bpf, ip: u32) -> Result<(), anyhow::Error> {
 }
 
 /// Get current violation count from eBPF
-pub fn get_violation_count(bpf: &Bpf) -> Result<u64, anyhow::Error> {
+pub fn get_violation_count(bpf: &mut Bpf) -> Result<u64, anyhow::Error> {
     if let Some(map) = bpf.map_mut("aegis_violations") {
         if let Ok(mut hmap) = PerCpuArray::<_, u64>::try_from(map) {
             let values = hmap.get(&0, 0)?;
