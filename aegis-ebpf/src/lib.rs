@@ -80,7 +80,7 @@ impl EbpfRuntime {
         for (name, bpf) in &mut loaded {
             let pnames: Vec<String> = bpf.programs().map(|(n, _)| n.to_string()).collect();
             for pname in &pnames {
-                if let Ok(program) = bpf.program_mut(pname) {
+                if let Some(program) = bpf.program_mut(pname) {
                     if let Ok(tp) = program.try_into() {
                         if let Err(e) = tp.load() {
                             warn!(program = %pname, error = %e, "Failed to load tracepoint");
