@@ -123,7 +123,7 @@ impl AuditLogService {
         if let Some(ref producer) = self.kafka_producer {
             let payload = serde_json::to_vec(event).unwrap_or_default();
             let record =
-                Record::from_key_value(&self.kafka_topic, event.event_id.as_bytes(), &payload);
+                Record::from_key_value(&self.kafka_topic, event.event_id.as_bytes(), payload);
             match producer.send(&record) {
                 Ok(_) => debug!(event_id = %event.event_id, "Published to Kafka"),
                 Err(e) => warn!(error = %e, "Failed to publish to Kafka"),
