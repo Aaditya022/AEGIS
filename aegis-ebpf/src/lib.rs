@@ -13,6 +13,7 @@ pub use events::*;
 pub use maps::*;
 pub use twoplane::*;
 
+#[allow(dead_code)]
 pub struct EbpfRuntime {
     bpf: Option<aya::Bpf>,
     event_tx: mpsc::Sender<AegisEvent>,
@@ -77,7 +78,7 @@ impl EbpfRuntime {
         }
 
         // Attach loaded programs
-        for (name, bpf) in &mut loaded {
+        for (_name, bpf) in &mut loaded {
             let pnames: Vec<String> = bpf.programs().map(|(n, _)| n.to_string()).collect();
             for pname in &pnames {
                 if let Some(program) = bpf.program_mut(pname) {

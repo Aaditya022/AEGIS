@@ -58,6 +58,12 @@ impl Clone for TwoPlaneVerifier {
     }
 }
 
+impl Default for TwoPlaneVerifier {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TwoPlaneVerifier {
     pub fn new() -> Self {
         Self {

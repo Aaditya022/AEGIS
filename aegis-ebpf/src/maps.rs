@@ -3,7 +3,6 @@ use aya::Bpf;
 use tracing::debug;
 
 /// Helper functions for interacting with eBPF maps from userspace
-
 /// Add a PID to the allowed_pids map
 pub fn add_pid_to_monitor(bpf: &mut Bpf, pid: u32) -> Result<(), anyhow::Error> {
     if let Some(map) = bpf.map_mut("aegis_allowed_pids") {
