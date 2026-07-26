@@ -99,7 +99,7 @@ impl IdentityVerifier {
 
     pub fn verify_local(&self, agent_id: &str, signature: &[u8], public_key: &[u8]) -> bool {
         let verifying_key = match ed25519_dalek::VerifyingKey::from_bytes(
-            public_key.try_into().unwrap_or_default(),
+            public_key.try_into().unwrap_or(&[0u8; 32]),
         ) {
             Ok(k) => k,
             Err(_) => return false,

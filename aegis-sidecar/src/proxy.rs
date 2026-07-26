@@ -92,7 +92,7 @@ async fn handle_connection(req: Request<Incoming>, state: Arc<AppState>) -> Prox
             resource: uri.to_string(),
             environment: env.clone(),
             recursion_depth: 0,
-            budget_consumed_usd: state.cost.current_cost().await,
+            budget_consumed_usd: state.cost.current_cost(),
             trace_id: trace_id.clone(),
             extra: Default::default(),
         };

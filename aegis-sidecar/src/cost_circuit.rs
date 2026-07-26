@@ -49,7 +49,7 @@ impl CostCircuit {
         Ok(())
     }
 
-    pub async fn current_cost(&self) -> f64 {
+    pub fn current_cost(&self) -> f64 {
         self.current_cost_micro_cents.load(Ordering::SeqCst) as f64 / 1_000_000.0
     }
 

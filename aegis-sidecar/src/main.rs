@@ -116,7 +116,7 @@ async fn main() -> anyhow::Result<()> {
         _ = signal::ctrl_c() => {
             info!("Shutdown signal received");
         }
-        _ = tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate()).unwrap() => {
+        _ = tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate()).unwrap().recv() => {
             info!("SIGTERM received");
         }
     }
@@ -127,6 +127,38 @@ async fn main() -> anyhow::Result<()> {
     tracer_provider.shutdown()?;
 
     Ok(())
+}
+
+async fn handle_health(
+    req: hyper::Request<hyper::body::Incoming>,
+    state: Arc<AppState>,
+) -> Result<hyper::Response<Full<Bytes>>, hyper::Error> {
+    match req.uri().path() {
+        "/health" | "/ready" => Ok(hyper::Response::builder()
+            .header("content-type", "application/json")
+            .body(Full::new(Bytes::from(
+                serde_json::json!({
+                    "status": "ok",
+                    "sidecar_id": state.config.read().await.sidecar_id,
+                    "agent_id": state.config.read().await.agent_id,
+                    "uptime_seconds": 0,
+                    "connections_active": 0,
+                })
+                .to_string(),
+            )))
+            .unwrap()),
+        "/metrics" => {
+            let metrics = state.metrics.snapshot().await;
+            Ok(hyper::Response::builder()
+                .header("content-type", "text/plain")
+                .body(Full::new(Bytes::from(metrics)))
+                .unwrap())
+        }
+        _ => Ok(hyper::Response::builder()
+            .status(404)
+            .body(Full::new(Bytes::from("not found")))
+            .unwrap()),
+    }
 }
 
 async fn serve_health(listener: tokio::net::TcpListener, state: Arc<AppState>) {
@@ -140,38 +172,7 @@ async fn serve_health(listener: tokio::net::TcpListener, state: Arc<AppState>) {
         };
         let state = state.clone();
         tokio::spawn(async move {
-            let service =
-                hyper::service::service_fn(move |req: hyper::Request<hyper::body::Incoming>| {
-                    let state = state.clone();
-                    async move {
-                        match req.uri().path() {
-                            "/health" | "/ready" => Ok(hyper::Response::builder()
-                                .header("content-type", "application/json")
-                                .body(Full::new(Bytes::from(
-                                    serde_json::json!({
-                                        "status": "ok",
-                                        "sidecar_id": state.config.read().await.sidecar_id,
-                                        "agent_id": state.config.read().await.agent_id,
-                                        "uptime_seconds": 0,
-                                        "connections_active": 0,
-                                    })
-                                    .to_string(),
-                                )))
-                                .unwrap()),
-                            "/metrics" => {
-                                let metrics = state.metrics.snapshot().await;
-                                Ok(hyper::Response::builder()
-                                    .header("content-type", "text/plain")
-                                    .body(Full::new(Bytes::from(metrics)))
-                                    .unwrap())
-                            }
-                            _ => Ok(hyper::Response::builder()
-                                .status(404)
-                                .body(Full::new(Bytes::from("not found")))
-                                .unwrap()),
-                        }
-                    }
-                });
+            let service = hyper::service::service_fn(move |req| handle_health(req, state.clone()));
             if let Err(e) = hyper::server::conn::http1::Builder::new()
                 .serve_connection(hyper_util::rt::TokioIo::new(stream), service)
                 .await
