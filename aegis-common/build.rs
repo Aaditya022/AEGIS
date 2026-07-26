@@ -4,12 +4,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .build_client(true)
         .compile_protos(
             &[
-                "../../proto/aegis/v1/common.proto",
-                "../../proto/aegis/v1/sidecar.proto",
-                "../../proto/aegis/v1/gateway.proto",
-                "../../proto/aegis/v1/control.proto",
+                "../proto/aegis/v1/common.proto",
+                "../proto/aegis/v1/sidecar.proto",
+                "../proto/aegis/v1/gateway.proto",
+                "../proto/aegis/v1/control.proto",
             ],
-            &["../../proto"],
+            &["../proto"],
         )?;
     Ok(())
 }
