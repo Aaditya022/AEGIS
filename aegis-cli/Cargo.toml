@@ -10,6 +10,7 @@ path = "src/main.rs"
 
 [dependencies]
 aegis-common = { path = "../aegis-common" }
+aegis-policy-engine = { path = "../aegis-policy-engine" }
 tokio.workspace = true
 clap.workspace = true
 serde.workspace = true

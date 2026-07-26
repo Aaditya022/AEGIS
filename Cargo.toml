@@ -29,7 +29,7 @@ opentelemetry = "0.27"
 opentelemetry-otlp = "0.27"
 opentelemetry_sdk = "0.27"
 clap = { version = "4", features = ["derive"] }
-reqwest = { version = "0.12", features = ["rustls-tls"] }
+reqwest = { version = "0.12", features = ["rustls-tls", "json"] }
 hyper = { version = "1", features = ["full"] }
 hyper-util = { version = "0.1", features = ["full"] }
 http = "1"
