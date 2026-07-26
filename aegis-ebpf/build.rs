@@ -19,7 +19,7 @@ fn main() {
 
     for program in &bpf_programs {
         let src = bpf_dir.join(program);
-        let out = bpf_dir.join(program.replace(".bpf.c", ".o"));
+        let out = bpf_dir.join(program.replace(".c", ".o"));
 
         println!("cargo:rerun-if-changed={}", src.display());
 

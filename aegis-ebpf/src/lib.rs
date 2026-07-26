@@ -77,14 +77,14 @@ impl EbpfRuntime {
         }
 
         // Attach loaded programs
-        for (name, bpf) in &loaded {
-            let programs = bpf.programs();
-            for (pname, program) in programs {
-                if let Ok(tp) =
-                    std::convert::TryInto::<&aya::programs::TracePoint>::try_into(program)
-                {
-                    if let Err(e) = tp.load() {
-                        warn!(program = %pname, error = %e, "Failed to load tracepoint");
+        for (name, bpf) in &mut loaded {
+            let pnames: Vec<String> = bpf.programs().map(|(n, _)| n.to_string()).collect();
+            for pname in &pnames {
+                if let Ok(program) = bpf.program_mut(pname) {
+                    if let Ok(tp) = program.try_into() {
+                        if let Err(e) = tp.load() {
+                            warn!(program = %pname, error = %e, "Failed to load tracepoint");
+                        }
                     }
                 }
             }
