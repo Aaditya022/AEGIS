@@ -2,12 +2,11 @@ use std::time::Instant;
 
 use aegis_common::types::{Decision, PolicyContext, PolicyResult};
 use tracing::debug;
-use wasmtime::component::Linker;
-use wasmtime::{Engine, Module, Store};
+use wasmtime::{Engine, Linker, Module, Store};
 
 pub struct WasmPolicyEngine {
     engine: Engine,
-    linker: wasmtime::component::Linker<()>,
+    linker: Linker<()>,
     module: Module,
 }
 
@@ -16,7 +15,6 @@ impl WasmPolicyEngine {
         let engine = Engine::default();
         let module = Module::new(&engine, wasm_bytes)?;
         let mut linker = Linker::new(&engine);
-        wasmtime_wasi::add_to_linker_sync(&mut linker)?;
 
         Ok(Self {
             engine,
