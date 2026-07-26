@@ -7,7 +7,7 @@ use chrono::{DateTime, Utc};
 use clap::Parser;
 use kafka::producer::{Producer, Record, RequiredAcks};
 use serde::{Deserialize, Serialize};
-use tokio::sync::RwLock;
+use tokio::sync::{Mutex, RwLock};
 use tracing::{debug, error, info, warn};
 
 #[derive(Parser)]
@@ -52,7 +52,7 @@ struct AuditSegment {
 struct AuditLogService {
     segments: RwLock<Vec<AuditSegment>>,
     prev_hash: RwLock<String>,
-    kafka_producer: Option<Producer>,
+    kafka_producer: Option<Mutex<Producer>>,
     kafka_topic: String,
 }
 
@@ -66,7 +66,7 @@ impl AuditLogService {
             {
                 Ok(producer) => {
                     info!(brokers = %kafka_brokers, "Connected to Kafka");
-                    Some(producer)
+                    Some(Mutex::new(producer))
                 }
                 Err(e) => {
                     warn!(error = %e, "Failed to connect to Kafka, events stored in-memory only");
@@ -124,7 +124,7 @@ impl AuditLogService {
             let payload = serde_json::to_vec(event).unwrap_or_default();
             let record =
                 Record::from_key_value(&self.kafka_topic, event.event_id.as_bytes(), payload);
-            match producer.send(&record) {
+            match producer.lock().await.send(&record) {
                 Ok(_) => debug!(event_id = %event.event_id, "Published to Kafka"),
                 Err(e) => warn!(error = %e, "Failed to publish to Kafka"),
             }
