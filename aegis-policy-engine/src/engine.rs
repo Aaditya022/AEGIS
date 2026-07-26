@@ -65,7 +65,7 @@ impl PolicyEngine {
         &self.policies
     }
 
-    pub fn evaluate(&self, ctx: &PolicyContext) -> anyhow::Result<PolicyResult> {
+    pub fn evaluate(&mut self, ctx: &PolicyContext) -> anyhow::Result<PolicyResult> {
         let start = Instant::now();
 
         // Builtin: reasoning risk score

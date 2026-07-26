@@ -83,15 +83,15 @@ impl RegoCompiler {
                     Ok(wasm) => {
                         let policy = crate::parse_rego(&source)
                             .map_err(|e| anyhow::anyhow!("parse error: {e}"))?;
-                        compiled.push(Policy {
-                            wasm_binary: Some(wasm),
-                            ..policy
-                        });
                         info!(
                             name = %policy.name,
                             file = %path.file_name().unwrap().to_string_lossy(),
                             "Compiled policy to WASM"
                         );
+                        compiled.push(Policy {
+                            wasm_binary: Some(wasm),
+                            ..policy
+                        });
                     }
                     Err(e) => {
                         warn!(

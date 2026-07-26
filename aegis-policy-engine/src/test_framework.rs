@@ -29,7 +29,7 @@ impl PolicyTestSuite {
         self.tests.extend(tests);
     }
 
-    pub fn run_all(&self) -> Vec<TestResult> {
+    pub fn run_all(&mut self) -> Vec<TestResult> {
         self.tests
             .iter()
             .map(|test| {
@@ -254,7 +254,7 @@ mod tests {
     #[test]
     fn test_default_compliance_suite() {
         let engine = PolicyEngine::default();
-        let suite = PolicyTestSuite::default_compliance_suite(engine);
+        let mut suite = PolicyTestSuite::default_compliance_suite(engine);
         let results = suite.run_all();
         let summary = suite.summary(&results);
 
