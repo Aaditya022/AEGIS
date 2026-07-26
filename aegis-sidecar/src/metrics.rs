@@ -67,7 +67,7 @@ impl MetricsRegistry {
         let escalated = self.counters.escalated_total.load(Ordering::Relaxed);
         let duration_ns = self.counters.request_duration_ns.load(Ordering::Relaxed);
         let count = self.counters.request_count.load(Ordering::Relaxed);
-        let avg_latency = if count > 0 { duration_ns / count } else { 0 };
+        let avg_latency = duration_ns.checked_div(count).unwrap_or(0);
 
         let cat_map = self.denied_by_category.read().await;
 

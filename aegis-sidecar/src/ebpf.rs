@@ -9,6 +9,7 @@ pub struct EbpfManager {
 }
 
 struct EbpfProgram {
+    #[allow(dead_code)]
     name: String,
     attached: bool,
     // aya::Ebpf would be stored here in production
@@ -23,6 +24,7 @@ pub struct SyscallEvent {
 }
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct NetworkEvent {
     pub pid: i32,
     pub sock_type: u32,
@@ -31,6 +33,7 @@ pub struct NetworkEvent {
 }
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct FileEvent {
     pub pid: i32,
     pub path: String,

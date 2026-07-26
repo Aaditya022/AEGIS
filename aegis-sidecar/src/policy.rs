@@ -13,12 +13,13 @@ pub struct PolicyEvaluator {
     engine: Arc<RwLock<PolicyEngine>>,
     control_plane_addr: String,
     policy_dir: String,
+    #[allow(dead_code)]
     metrics: MetricsRegistry,
     client: reqwest::Client,
 }
 
 impl PolicyEvaluator {
-    pub fn new(control_plane_addr: String, policy_dir: String, metrics: &MetricsRegistry) -> Self {
+    pub fn new(control_plane_addr: String, policy_dir: String, _metrics: &MetricsRegistry) -> Self {
         let engine = match PolicyEngine::new(&policy_dir) {
             Ok(e) => {
                 info!(dir = %policy_dir, count = e.policy_count(), "Policies loaded");

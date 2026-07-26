@@ -138,7 +138,7 @@ async fn handle_connection(req: Request<Incoming>, state: Arc<AppState>) -> Prox
                         let body_str = String::from_utf8_lossy(&upstream_body).to_string();
 
                         state.metrics.record_request(
-                            &method.to_string(),
+                            &format!("{method}"),
                             uri.path(),
                             elapsed,
                             status.as_u16(),
@@ -175,7 +175,7 @@ async fn handle_connection(req: Request<Incoming>, state: Arc<AppState>) -> Prox
             GovernanceOutcome::Deny { reason, category } => {
                 state.metrics.inc_denied(&category);
                 state.metrics.record_request(
-                    &method.to_string(),
+                    &format!("{method}"),
                     uri.path(),
                     start.elapsed(),
                     StatusCode::FORBIDDEN.as_u16(),
@@ -185,7 +185,7 @@ async fn handle_connection(req: Request<Incoming>, state: Arc<AppState>) -> Prox
                     .log_event(
                         &agent_id,
                         &format!("{method} {uri}"),
-                        &uri.to_string(),
+                        &format!("{uri}"),
                         "DENY",
                         &trace_id,
                     )
@@ -195,7 +195,7 @@ async fn handle_connection(req: Request<Incoming>, state: Arc<AppState>) -> Prox
             GovernanceOutcome::Escalate { reason, category } => {
                 state.metrics.inc_denied(&category);
                 state.metrics.record_request(
-                    &method.to_string(),
+                    &format!("{method}"),
                     uri.path(),
                     start.elapsed(),
                     StatusCode::FORBIDDEN.as_u16(),

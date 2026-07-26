@@ -25,15 +25,13 @@ impl CostCircuit {
             .fetch_add(micro_cents, Ordering::SeqCst);
         let new_total = (prev + micro_cents) as f64 / 1_000_000.0;
 
-        if new_total > self.budget() {
-            if !self.breached.swap(true, Ordering::SeqCst) {
-                warn!(
-                    sidecar = %self.sidecar_id,
-                    total = new_total,
-                    limit = self.budget(),
-                    "Budget circuit breaker tripped"
-                );
-            }
+        if new_total > self.budget() && !self.breached.swap(true, Ordering::SeqCst) {
+            warn!(
+                sidecar = %self.sidecar_id,
+                total = new_total,
+                limit = self.budget(),
+                "Budget circuit breaker tripped"
+            );
         }
     }
 

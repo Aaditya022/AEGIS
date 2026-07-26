@@ -9,10 +9,12 @@ pub enum DetectedProtocol {
     A2a, // Agent-to-Agent (Google)
     Acp, // Agent Communication Protocol
     Anp, // Agent Network Protocol
+    #[allow(dead_code)]
     Unknown,
 }
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct ProtocolInfo {
     pub protocol: DetectedProtocol,
     pub is_tls: bool,
@@ -26,15 +28,12 @@ pub fn detect_protocol(method: &Method, uri: &Uri, headers: &HeaderMap) -> Proto
         .and_then(|v| v.to_str().ok())
         .map(|s| s.to_string());
 
-    let is_tls = uri.scheme_str().map_or(false, |s| s == "https");
+    let is_tls = uri.scheme_str().is_some_and(|s| s == "https");
 
     let is_streaming = headers
         .get("accept")
-        .map(|v| v.as_bytes())
-        .and_then(|v| {
-            let s = std::str::from_utf8(v).unwrap_or("");
-            Some(s.contains("text/event-stream") || s.contains("application/x-ndjson"))
-        })
+        .and_then(|v| v.to_str().ok())
+        .map(|s| s.contains("text/event-stream") || s.contains("application/x-ndjson"))
         .unwrap_or(false);
 
     let protocol = if content_type.as_deref() == Some("application/grpc")
