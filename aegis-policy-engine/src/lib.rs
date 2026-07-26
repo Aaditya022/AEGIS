@@ -46,7 +46,7 @@ pub struct PolicyEngine {
     metrics: Mutex<EngineMetrics>,
 }
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 #[allow(dead_code)]
 pub struct EngineMetrics {
     evaluations: u64,
