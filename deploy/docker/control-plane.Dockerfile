@@ -1,4 +1,4 @@
-FROM golang:1.22-alpine AS builder
+FROM golang:1.26-alpine AS builder
 WORKDIR /app
 COPY aegis-control-plane/go.mod aegis-control-plane/go.sum ./aegis-control-plane/
 COPY aegis-control-plane/ ./aegis-control-plane/
