@@ -38,7 +38,7 @@ hex.workspace = true
 base64.workspace = true
 ed25519-dalek.workspace = true
 serde_yaml = "0.9"
-tracing-opentelemetry = "0.28"
+tracing-opentelemetry = "0.33"
 
 [dev-dependencies]
 criterion.workspace = true
