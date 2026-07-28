@@ -1,4 +1,4 @@
-FROM rust:1.79-slim-bookworm AS builder
+FROM rust:1.97-slim-bookworm AS builder
 RUN apt-get update && apt-get install -y protobuf-compiler libclang-dev && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY Cargo.toml Cargo.lock ./
